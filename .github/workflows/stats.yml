@@ -2,8 +2,8 @@ name: Mettre à jour mes stats
 
 on:
   schedule:
-    - cron: '7 */3 * * *'   # toutes les 3 heures
-  workflow_dispatch:         # bouton « Run workflow » (aussi dans l'appli GitHub)
+    - cron: '*/30 * * * *'  # toutes les 30 minutes
+  workflow_dispatch:         # bouton ↻ de l'appli, ou « Run workflow » dans l'appli GitHub
 
 permissions:
   contents: write
@@ -42,6 +42,7 @@ jobs:
         env:
           CLE_COFFRE: ${{ secrets.CLE_COFFRE }}
           CODE_APP: ${{ secrets.CODE_APP }}
+          BOUTON_PAT: ${{ secrets.BOUTON_PAT }}
         run: |
           node outils/coffre.js fermer
           node outils/coffre.js page
@@ -53,4 +54,5 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add donnees.enc etat.enc
           git commit -m "Stats du $(date -u '+%d/%m %H:%M') UTC" || exit 0
+          git pull --rebase -q || true
           git push
