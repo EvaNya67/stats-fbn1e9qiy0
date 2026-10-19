@@ -1,0 +1,798 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Mes stats">
+<meta name="theme-color" content="#17121f">
+<link rel="apple-touch-icon" href="icone-180.png">
+<link rel="icon" href="icone-180.png">
+<link rel="manifest" href="manifest.webmanifest">
+<title>Mes stats</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=Nunito:wght@400;600;700;800&display=swap">
+<style>
+  /* Plan : une page calme couleur prune nuit, une seule chose qui ressort (la phrase-titre de l'accueil),
+     des onglets pour ne montrer qu'un compte à la fois. Bleu pervenche = X, rose corail = TikTok. */
+  :root {
+    color-scheme: dark;
+    --nuit: #17121f;      /* fond */
+    --velours: #201a2b;   /* surfaces */
+    --brume: #2a2337;     /* surfaces surélevées */
+    --trait: #3a3049;     /* séparateurs */
+    --lait: #f4eff9;      /* texte */
+    --lavande: #a99fbb;   /* texte secondaire */
+    --pervenche: #9fadff; /* X */
+    --corail: #ff7c9c;    /* TikTok */
+    --menthe: #74e3b5;    /* bon */
+    --miel: #ffd27a;      /* à surveiller */
+    --cerise: #ff7a8a;    /* alerte */
+    --titre: "Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
+    --texte: "Nunito", "Segoe UI", system-ui, sans-serif;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; }
+  body { background: var(--nuit); color: var(--lait); font: 15px/1.55 var(--texte); -webkit-font-smoothing: antialiased; }
+  a { color: inherit; }
+  button, select { font: inherit; color: inherit; }
+  :focus-visible { outline: 2px solid var(--pervenche); outline-offset: 2px; border-radius: 6px; }
+
+  /* ---------- Barre du haut ---------- */
+  .barre { position: sticky; top: 0; z-index: 5; background: rgba(23, 18, 31, .9); backdrop-filter: blur(10px); border-bottom: 1px solid var(--trait); }
+  .barre-in { max-width: 1040px; margin: 0 auto; padding: 12px 20px; display: flex; align-items: center; gap: 18px; flex-wrap: wrap; }
+  .marque { display: flex; align-items: center; gap: 10px; font-family: var(--titre); font-weight: 700; font-size: 17px; }
+  .marque svg { width: 26px; height: 26px; }
+  nav { display: flex; gap: 4px; flex-wrap: wrap; flex: 1; }
+  nav button { background: none; border: 0; padding: 7px 12px; border-radius: 999px; cursor: pointer; color: var(--lavande); font-weight: 700; font-size: 14px; display: flex; align-items: center; gap: 7px; }
+  nav button:hover { color: var(--lait); background: var(--velours); }
+  nav button[aria-current="page"] { color: var(--lait); background: var(--brume); }
+  nav .pastille { width: 8px; height: 8px; border-radius: 50%; }
+  .maj { color: var(--lavande); font-size: 13px; }
+
+  main { max-width: 1040px; margin: 0 auto; padding: 32px 20px 64px; }
+  section + section { margin-top: 40px; }
+  h2 { font-family: var(--titre); font-weight: 700; font-size: 20px; margin: 0 0 4px; letter-spacing: -0.01em; }
+  .sous { color: var(--lavande); font-size: 14px; margin: 0 0 16px; }
+  .num { font-variant-numeric: tabular-nums; }
+
+  /* ---------- Accueil ---------- */
+  .hero .bonjour { color: var(--lavande); font-weight: 700; margin: 0 0 6px; }
+  .hero h1 { font-family: var(--titre); font-weight: 800; font-size: clamp(30px, 5vw, 52px); line-height: 1.02; letter-spacing: -0.035em; margin: 0; text-wrap: balance; }
+  .hero h1 .gros { display: block; font-size: clamp(64px, 13vw, 132px); letter-spacing: -0.05em; background: linear-gradient(100deg, var(--pervenche), #c9a7ff 50%, var(--corail)); -webkit-background-clip: text; background-clip: text; color: transparent; }
+  .hero .evol { margin: 14px 0 0; font-size: 16px; color: var(--lavande); }
+
+  .comptes { display: grid; gap: 2px; background: var(--trait); border-radius: 18px; overflow: hidden; border: 1px solid var(--trait); }
+  .compte { display: grid; grid-template-columns: 48px minmax(0, 1fr) auto 190px; align-items: center; gap: 16px; padding: 16px 18px; background: var(--velours); cursor: pointer; text-align: left; border: 0; width: 100%; }
+  .compte:hover { background: var(--brume); }
+  .compte .qui b { display: block; font-size: 16px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .compte .qui span { color: var(--lavande); font-size: 13px; }
+  .compte .chiffre { text-align: right; }
+  .compte .chiffre b { font-family: var(--titre); font-size: 24px; font-weight: 700; display: block; line-height: 1.1; }
+  .compte .chiffre span { font-size: 13px; }
+  .compte .etat { justify-self: end; }
+  .etat { display: inline-flex; align-items: center; gap: 7px; font-size: 13px; font-weight: 700; padding: 5px 11px; border-radius: 999px; background: var(--brume); white-space: nowrap; color: var(--lavande); }
+  .etat i { width: 8px; height: 8px; border-radius: 50%; background: var(--lavande); }
+  .etat.ok { color: var(--menthe); } .etat.ok i { background: var(--menthe); }
+  .etat.attention { color: var(--miel); } .etat.attention i { background: var(--miel); }
+  .etat.alerte { color: var(--cerise); } .etat.alerte i { background: var(--cerise); }
+  .etat.vide { visibility: hidden; }
+
+  .retenir { list-style: none; margin: 0; padding: 0; display: grid; gap: 12px; }
+  .retenir li { display: grid; grid-template-columns: 34px minmax(0, 1fr); gap: 12px; align-items: start; background: var(--velours); border-radius: 14px; padding: 14px 16px; }
+  .retenir .ico { font-size: 20px; line-height: 1.3; text-align: center; }
+  .retenir .src { display: block; font-size: 12.5px; color: var(--lavande); margin-top: 3px; }
+
+  /* ---------- Avatars ---------- */
+  .avatar { width: 48px; height: 48px; border-radius: 50%; object-fit: cover; background: var(--brume); display: grid; place-items: center; font-weight: 800; font-family: var(--titre); }
+  .avatar.grand { width: 72px; height: 72px; font-size: 26px; }
+  .avatar.x { box-shadow: 0 0 0 2px var(--nuit), 0 0 0 4px var(--pervenche); }
+  .avatar.tt { box-shadow: 0 0 0 2px var(--nuit), 0 0 0 4px var(--corail); }
+
+  /* ---------- Page d'un compte ---------- */
+  .tete { display: flex; align-items: center; gap: 18px; flex-wrap: wrap; }
+  .tete h1 { font-family: var(--titre); font-weight: 800; font-size: clamp(28px, 4.5vw, 40px); letter-spacing: -0.03em; margin: 0; line-height: 1.05; }
+  .tete .pseudo { color: var(--lavande); }
+  .tete .pseudo a { color: var(--lavande); }
+  .stats { display: flex; flex-wrap: wrap; gap: 12px 44px; margin: 24px 0 0; padding: 20px 0 0; border-top: 1px solid var(--trait); }
+  .stat .v { font-family: var(--titre); font-weight: 700; font-size: 34px; line-height: 1; letter-spacing: -0.02em; }
+  .stat .l { color: var(--lavande); font-size: 14px; margin-top: 6px; }
+  .stat .d { font-size: 13px; margin-top: 2px; }
+  .up { color: var(--menthe); } .down { color: var(--cerise); } .neutre { color: var(--lavande); }
+
+  .deux { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.3fr); gap: 16px; }
+  .bloc { background: var(--velours); border-radius: 18px; padding: 20px; min-width: 0; }
+  .bloc h3 { font-family: var(--titre); font-weight: 700; font-size: 17px; margin: 0 0 12px; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+  .raisons { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; font-size: 14px; line-height: 1.5; }
+  .petit { color: var(--lavande); font-size: 12.5px; line-height: 1.5; margin: 14px 0 0; }
+  .lien-bouton { background: var(--brume); border: 1px solid var(--trait); border-radius: 999px; padding: 7px 14px; cursor: pointer; font-weight: 700; font-size: 13.5px; margin-top: 14px; }
+  .lien-bouton:hover { border-color: var(--pervenche); }
+  .vide-msg { color: var(--lavande); font-size: 14px; padding: 26px 10px; text-align: center; margin: 0; }
+
+  .chart { width: 100%; height: auto; display: block; }
+  .chart text { fill: var(--lavande); font: 12px var(--texte); }
+
+  .conseils { list-style: none; margin: 0; padding: 0; display: grid; gap: 2px; background: var(--trait); border-radius: 18px; overflow: hidden; }
+  .conseils li { background: var(--velours); padding: 14px 18px; display: grid; grid-template-columns: 30px minmax(0, 1fr); gap: 10px; font-size: 14.5px; line-height: 1.5; }
+
+  /* Liste des posts */
+  .tri { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 12px; }
+  .tri button { background: none; border: 1px solid var(--trait); border-radius: 999px; padding: 5px 12px; cursor: pointer; font-size: 13px; font-weight: 700; color: var(--lavande); }
+  .tri button[aria-pressed="true"] { color: var(--lait); border-color: var(--lavande); background: var(--brume); }
+  .posts { list-style: none; margin: 0; padding: 0; display: grid; gap: 2px; background: var(--trait); border-radius: 18px; overflow: hidden; }
+  .post > button { width: 100%; background: var(--velours); border: 0; padding: 14px 18px; display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 16px; align-items: center; text-align: left; cursor: pointer; }
+  .post > button:hover, .post.ouvert > button { background: var(--brume); }
+  .post .txt { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; font-size: 14.5px; }
+  .post .meta { display: block; color: var(--lavande); font-size: 12.5px; margin-top: 3px; }
+  .post .score { text-align: right; white-space: nowrap; }
+  .post .score b { display: block; font-family: var(--titre); font-size: 20px; font-weight: 700; line-height: 1.1; }
+  .post .score span { font-size: 12.5px; color: var(--lavande); }
+  .detail { background: var(--brume); padding: 0 18px 18px; }
+  .detail .chiffres { display: flex; flex-wrap: wrap; gap: 6px 22px; padding: 4px 0 12px; font-size: 13.5px; color: var(--lavande); border-bottom: 1px solid var(--trait); margin-bottom: 12px; }
+  .detail .chiffres b { color: var(--lait); }
+  .detail a.voir { display: inline-block; margin-top: 12px; color: var(--pervenche); font-weight: 700; font-size: 13.5px; text-decoration: none; }
+
+  /* Alertes */
+  .alerte-msg { border-radius: 14px; padding: 13px 16px; margin-bottom: 14px; font-size: 14px; background: #3a2030; border: 1px solid #6b3646; }
+  .alerte-msg.doux { background: #352c22; border-color: #6a5636; }
+  .alerte-msg b { display: block; }
+  .alerte-msg details { margin-top: 6px; color: var(--lavande); font-size: 12px; }
+  .alerte-msg pre { white-space: pre-wrap; word-break: break-all; margin: 6px 0 0; }
+
+  /* Check-up */
+  .verdict { background: var(--velours); border-radius: 18px; padding: 22px; border-left: 6px solid var(--lavande); }
+  .verdict.ok { border-left-color: var(--menthe); } .verdict.attention { border-left-color: var(--miel); } .verdict.alerte { border-left-color: var(--cerise); }
+  .verdict .t { font-family: var(--titre); font-weight: 800; font-size: 26px; letter-spacing: -0.02em; margin: 0; }
+  .verdict .fiab { color: var(--lavande); font-size: 13px; margin: 4px 0 0; }
+  .verdict p.d { margin: 10px 0 0; font-size: 14.5px; }
+  .verdict .last { color: var(--lavande); font-size: 13px; margin: 10px 0 0; }
+  .avant { background: var(--velours); border-radius: 14px; padding: 14px 16px; font-size: 14px; margin: 16px 0; }
+  .etapes { list-style: none; counter-reset: e; margin: 0; padding: 0; display: grid; gap: 12px; }
+  .etapes li { counter-increment: e; background: var(--velours); border-radius: 16px; padding: 16px 18px; display: grid; grid-template-columns: 34px minmax(0, 1fr); gap: 4px 12px; }
+  .etapes li::before { content: counter(e); grid-row: span 3; width: 30px; height: 30px; border-radius: 50%; background: var(--brume); display: grid; place-items: center; font-family: var(--titre); font-weight: 800; }
+  .etapes b { font-size: 15px; }
+  .etapes .aide { color: var(--lavande); font-size: 13.5px; }
+  .etapes .actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; align-items: center; }
+  .etapes a { color: var(--pervenche); font-weight: 700; font-size: 13.5px; text-decoration: none; margin-right: 6px; }
+  .choix { background: var(--brume); border: 1px solid var(--trait); border-radius: 999px; padding: 6px 13px; cursor: pointer; font-weight: 700; font-size: 13px; }
+  .choix[aria-pressed="true"].oui { border-color: var(--menthe); color: var(--menthe); }
+  .choix[aria-pressed="true"].non { border-color: var(--cerise); color: var(--cerise); }
+  .ck-bas { display: flex; gap: 10px; margin-top: 16px; flex-wrap: wrap; align-items: center; }
+  .principal { background: var(--pervenche); color: #17121f; border: 0; border-radius: 999px; padding: 10px 18px; font-weight: 800; cursor: pointer; }
+  .principal:disabled { opacity: .35; cursor: not-allowed; }
+  .discret { background: none; border: 0; color: var(--lavande); cursor: pointer; font-weight: 700; text-decoration: underline; }
+  .histo { list-style: none; padding: 0; margin: 8px 0 0; display: grid; gap: 6px; font-size: 14px; }
+  .histo span { color: var(--lavande); }
+  select.compte-choix { background: var(--brume); border: 1px solid var(--trait); border-radius: 999px; padding: 7px 14px; font-weight: 700; }
+
+  footer { color: var(--lavande); font-size: 13px; margin-top: 56px; padding-top: 18px; border-top: 1px solid var(--trait); line-height: 1.6; }
+
+  @media (max-width: 760px) {
+    .deux { grid-template-columns: 1fr; }
+    .compte { grid-template-columns: 44px minmax(0, 1fr) auto; }
+    .compte .etat { grid-column: 2 / -1; justify-self: start; }
+    .maj { margin-left: auto; }
+    nav { order: 3; flex-basis: 100%; flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; margin: 0 -4px; }
+    nav button { white-space: nowrap; flex: none; }
+    .compte { gap: 12px; padding: 14px; }
+    .compte .chiffre span { display: block; max-width: 130px; margin-left: auto; font-size: 12px; line-height: 1.35; }
+    .hero .evol { font-size: 15px; }
+  }
+  @media (prefers-reduced-motion: no-preference) {
+    .hero h1 .gros { animation: monte .7s cubic-bezier(.2, .8, .2, 1) both; }
+    @keyframes monte { from { opacity: 0; transform: translateY(14px); } }
+  }
+
+  /* ---------- Version en ligne : écran de code ---------- */
+  .barre { padding-top: env(safe-area-inset-top, 0px); }
+  .barre-in, main { padding-left: max(20px, env(safe-area-inset-left, 0px)); padding-right: max(20px, env(safe-area-inset-right, 0px)); }
+  .rafraichir { background: var(--brume); border: 1px solid var(--trait); border-radius: 50%; width: 34px; height: 34px; cursor: pointer; font-size: 17px; line-height: 1; }
+  #verrou { position: fixed; inset: 0; z-index: 50; background: radial-gradient(120% 80% at 50% 0%, #2a2040 0%, var(--nuit) 60%); display: grid; place-items: center; padding: max(24px, env(safe-area-inset-top, 0px)) 20px max(24px, env(safe-area-inset-bottom, 0px)); }
+  #verrou[hidden] { display: none; }
+  .vr { width: min(320px, 100%); text-align: center; }
+  .vr svg { width: 64px; height: 64px; }
+  .vr h1 { font-family: var(--titre); font-weight: 800; font-size: 28px; letter-spacing: -0.02em; margin: 14px 0 4px; }
+  .vr p { color: var(--lavande); margin: 0; font-size: 15px; min-height: 23px; }
+  .vr p.err { color: var(--cerise); }
+  .points { display: flex; gap: 18px; justify-content: center; margin: 26px 0 30px; }
+  .points i { width: 15px; height: 15px; border-radius: 50%; border: 2px solid var(--lavande); }
+  .points i.on { background: var(--lait); border-color: var(--lait); }
+  .points.secoue { animation: secoue .4s; }
+  @keyframes secoue { 20%, 60% { transform: translateX(-10px); } 40%, 80% { transform: translateX(10px); } }
+  .pave { display: grid; grid-template-columns: repeat(3, 76px); gap: 16px 22px; justify-content: center; }
+  .pave button { width: 76px; height: 76px; border-radius: 50%; border: 0; background: rgba(255, 255, 255, .08); font-family: var(--titre); font-size: 30px; font-weight: 500; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+  .pave button:active { background: rgba(255, 255, 255, .22); }
+  .pave .vide { background: none; pointer-events: none; }
+  .pave .eff { background: none; font-size: 22px; }
+  .souvenir { display: flex; gap: 9px; align-items: center; justify-content: center; margin-top: 26px; color: var(--lavande); font-size: 14px; }
+  .souvenir input { width: 18px; height: 18px; accent-color: var(--pervenche); }
+</style>
+</head>
+<body>
+<header class="barre"><div class="barre-in">
+  <div class="marque"><svg viewBox="0 0 32 32" aria-hidden="true"><rect x="1" y="1" width="30" height="30" rx="9" fill="#2a2337"/><rect x="7" y="16" width="5" height="9" rx="2" fill="#9fadff"/><rect x="13.5" y="11" width="5" height="14" rx="2" fill="#c9a7ff"/><rect x="20" y="6" width="5" height="19" rx="2" fill="#ff7c9c"/></svg>Mes stats</div>
+  <nav id="nav" aria-label="Sections"></nav>
+  <div class="maj" id="maj"></div><button class="rafraichir" id="rafraichir" aria-label="Actualiser" title="Recharger les dernières stats">↻</button>
+</div></header>
+<main id="vue"></main>
+<div id="verrou">
+  <div class="vr">
+    <svg viewBox="0 0 32 32" aria-hidden="true"><rect x="1" y="1" width="30" height="30" rx="9" fill="#2a2337"/><rect x="7" y="16" width="5" height="9" rx="2" fill="#9fadff"/><rect x="13.5" y="11" width="5" height="14" rx="2" fill="#c9a7ff"/><rect x="20" y="6" width="5" height="19" rx="2" fill="#ff7c9c"/></svg>
+    <h1>Mes stats</h1>
+    <p id="vr-msg">Entre ton code</p>
+    <div class="points" id="points" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
+    <div class="pave" id="pave"></div>
+    <label class="souvenir"><input type="checkbox" id="souvenir"> Se souvenir de cet appareil</label>
+  </div>
+</div>
+
+<script>
+function demarrer() {
+  const S = window.STATS;
+  const vue = document.getElementById('vue');
+  const nav = document.getElementById('nav');
+
+  // ================= Petits outils =================
+  const fmt = n => (n == null || isNaN(n)) ? '—' : Number(n).toLocaleString('fr-FR');
+  const short = n => {
+    if (n == null || isNaN(n)) return '—';
+    const a = Math.abs(n);
+    if (a >= 1e6) return (n / 1e6).toLocaleString('fr-FR', { maximumFractionDigits: 1 }) + ' M';
+    if (a >= 1e4) return (n / 1e3).toLocaleString('fr-FR', { maximumFractionDigits: 1 }) + ' k';
+    return fmt(n);
+  };
+  const dec = (n, d = 1) => Number(n).toLocaleString('fr-FR', { maximumFractionDigits: d });
+  const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  const ago = epoch => {
+    const m = Math.round((Date.now() / 1000 - epoch) / 60);
+    if (m < 1) return "à l'instant";
+    if (m < 60) return 'il y a ' + m + ' min';
+    const h = Math.round(m / 60);
+    if (h < 48) return 'il y a ' + h + ' h';
+    return 'il y a ' + Math.round(h / 24) + ' jours';
+  };
+  const dateFr = iso => new Date(iso).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' });
+  const dateHeureFr = iso => new Date(iso).toLocaleString('fr-FR', { weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
+  const lire = k => { try { return JSON.parse(localStorage.getItem(k) || 'null'); } catch (e) { return null; } };
+  const ecrire = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) { } };
+
+  const MESSAGES = {
+    token_manquant: ['Il manque ton Bearer Token X', "Ouvre config.txt dans le dossier de l'appli, colle ton Bearer Token après X_BEARER_TOKEN= puis relance « Ouvrir mes stats »."],
+    pseudo_manquant: ['Il manque ton pseudo X', 'Dans config.txt, mets ton pseudo après X_PSEUDO= (sans le @).'],
+    token_invalide: ['X refuse ton Bearer Token', 'Il est peut-être incomplet ou a été régénéré. Recopie-le en entier dans config.txt.'],
+    credits: ['Plus de crédits X', 'Ajoute des crédits sur console.x.com (Acheter des crédits), puis relance. Tes dernières stats X restent affichées.'],
+    acces: ["X refuse l'accès", 'Vérifie que tu as des crédits et que ton app est bien dans le projet « Pay Per Use » sur console.x.com.'],
+    pseudo: ['Compte X introuvable', "Vérifie l'orthographe du pseudo dans config.txt ou config-x-comptes.txt."],
+    limite: ['X limite les requêtes pour le moment', 'Réessaie un peu plus tard.'],
+    reseau: ['Impossible de joindre X', 'Vérifie ta connexion internet, puis relance.'],
+    autre: ['X a renvoyé une erreur inattendue', 'Le détail technique est ci-dessous.'],
+    tt_config: ["TikTok n'est pas encore configuré", 'Colle ta Client key et ton Client secret dans config-tiktok.txt, puis relance « Ouvrir mes stats ».'],
+    tt_autorisation: ['TikTok demande ton autorisation', "Lance « Ouvrir mes stats » : une page TikTok s'ouvre, clique sur Autoriser (environ une fois par an)."],
+    tt_jeton: ['TikTok refuse la connexion', 'Vérifie la Client key et le Client secret dans config-tiktok.txt, puis relance.'],
+    tt_api: ['TikTok a renvoyé une erreur', 'Réessaie dans quelques minutes.']
+  };
+  const alerteHtml = (code, detail, prefixe, doux) => {
+    const m = MESSAGES[code] || MESSAGES.autre;
+    return `<div class="alerte-msg ${doux ? 'doux' : ''}"><b>${esc((prefixe || '') + m[0])}</b>${esc(m[1])}` +
+      (detail ? `<details><summary>Détail technique</summary><pre>${esc(detail)}</pre></details>` : '') + '</div>';
+  };
+
+  if (!S) {
+    vue.innerHTML = `<section class="hero"><h1>Pas encore de stats</h1><p class="evol">Double-clique sur « Ouvrir mes stats » dans le dossier : il récupère tes chiffres puis ouvre cette page.</p></section>`;
+    return;
+  }
+
+  // ================= Données =================
+  const histOf = (arr, key) => (arr || []).filter(h => h && h[key] != null).sort((a, b) => a.epoch - b.epoch);
+  const comptesX = [{ X: S.x || {}, pseudo: (S.x && S.x.profil && S.x.profil.pseudo) || '', hist: histOf(S.historique, 'x_abonnes') }]
+    .concat((S.xAutres || []).map(a => ({ X: a.x || {}, pseudo: a.pseudo, hist: histOf(a.historique, 'x_abonnes') })))
+    .map((c, i) => ({ ...c, id: 'x' + i, type: 'x', P: c.X.profil || null, posts: (c.X.posts || []).slice() }));
+  const T = S.tiktok || {};
+  const tiktok = { id: 'tt', type: 'tt', X: T, P: T.profil || null, posts: (T.videos || []).slice(), hist: histOf(S.historiqueTiktok, 'tt_abonnes') };
+  const tous = comptesX.concat(T.ok || T.erreur ? [tiktok] : []);
+  const nomDe = c => c.P ? c.P.nom : (c.type === 'tt' ? 'TikTok' : '@' + c.pseudo);
+  const pseudoDe = c => c.P && c.P.pseudo ? '@' + c.P.pseudo : (c.type === 'x' && c.pseudo ? '@' + c.pseudo : '');
+  const reseau = c => c.type === 'tt' ? 'TikTok' : 'X';
+  const cleAbo = c => c.type === 'tt' ? 'tt_abonnes' : 'x_abonnes';
+
+  // ================= Évolution =================
+  const quand = iso => {
+    const d = new Date(iso), n = new Date();
+    const diff = Math.round((new Date(n.getFullYear(), n.getMonth(), n.getDate()) - new Date(d.getFullYear(), d.getMonth(), d.getDate())) / 86400000);
+    const h = d.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+    return diff === 0 ? "aujourd'hui " + h : diff === 1 ? 'hier ' + h : 'le ' + dateFr(iso);
+  };
+  function delta(hist, key) {
+    if (hist.length < 2) return null;
+    const last = hist[hist.length - 1];
+    let ref = null;
+    for (const h of hist) if (h.epoch <= last.epoch - 86400) ref = h;
+    let label = 'en 24 h';
+    if (!ref) { ref = hist[0]; label = 'depuis ' + quand(ref.date); }
+    if (ref === last) return null;
+    return { v: last[key] - ref[key], label, avant: ref[key], apres: last[key] };
+  }
+  const deltaTxt = d => {
+    if (!d) return '<span class="neutre" title="Il faut deux mises à jour pour comparer">première mesure</span>';
+    const cls = d.v > 0 ? 'up' : d.v < 0 ? 'down' : 'neutre';
+    const sign = d.v > 0 ? '+' : d.v < 0 ? '−' : '';
+    return `<span class="${cls}" title="${esc(fmt(d.avant) + ' → ' + fmt(d.apres))}">${sign}${fmt(Math.abs(d.v))} ${esc(d.label)}</span>`;
+  };
+
+  // ================= Analyse des contenus =================
+  const STOP = new Set(['pour','avec','dans','this','that','with','your','have','will','vous','mais','plus','tout','very','just','what','from','they','cette','sont','être','fait','comme','trop','juste','alors','quoi','donc','elle','nous','leur','their','there','here','when','been','into','about','faut','tres','très','encore','aussi','bien','sans','sous','chez','would','could']);
+  const nettoieT = t => String(t || '').replace(/https?:\/\/\S+/g, '').replace(/&gt;/g, '>').replace(/&lt;/g, '<').replace(/&amp;/g, '&').trim();
+  const motsDe = p => {
+    const t = nettoieT(p.texte).toLowerCase();
+    const tags = (t.match(/#[\p{L}\p{N}_]+/gu) || []).map(x => x.replace(/^#+/, '#'));
+    const mots = (t.replace(/#[\p{L}\p{N}_]+/gu, ' ').match(/\p{L}{4,}/gu) || []).filter(w => !STOP.has(w));
+    return [...new Set([...tags, ...mots])];
+  };
+  const mediane = vals => { const v = vals.slice().sort((a, b) => a - b); if (!v.length) return 0; const k = v.length >> 1; return v.length % 2 ? v[k] : (v[k - 1] + v[k]) / 2; };
+  const heureDe = p => new Date(p.date).getHours();
+  const TRANCHES = [['la nuit', 0, 6], ['le matin', 6, 12], ["l'après-midi", 12, 18], ['le soir', 18, 24]];
+  const trancheDe = p => TRANCHES.find(([, a, b]) => heureDe(p) >= a && heureDe(p) < b);
+  const formatX = p => {
+    const txt = nettoieT(p.texte), lien = /https?:\/\//.test(p.texte || '');
+    if (!txt && lien) return 'lien';
+    if (p.media) return p.media;
+    if ('media' in p) return txt.length > 120 ? 'long' : 'texte';
+    if (lien && txt.length <= 120) return 'image';
+    return txt.length > 120 ? 'long' : 'texte';
+  };
+  const NOMS_FORMAT = { lien: 'lien seul', photo: 'photo', image: 'image', video: 'vidéo', gif: 'GIF', texte: 'texte seul', long: 'long texte' };
+  const metrique = list => list.some(q => (q.vues || 0) > 0) ? 'vues' : 'likes';
+
+  function effetsMots(list, m) {
+    const compte = new Map();
+    list.forEach(p => motsDe(p).forEach(w => compte.set(w, (compte.get(w) || 0) + 1)));
+    const res = [];
+    for (const [w, n] of compte) {
+      if (n < 3 || n > list.length - 3) continue;
+      const avec = list.filter(p => motsDe(p).includes(w)), sans = list.filter(p => !motsDe(p).includes(w));
+      const ma = mediane(avec.map(p => p[m] || 0)), mb = mediane(sans.map(p => p[m] || 0));
+      if (ma && mb) res.push({ w, n, r: ma / mb, ma, mb });
+    }
+    return res.filter(x => x.r >= 1.4 || x.r <= 0.7).sort((a, b) => Math.abs(Math.log(b.r)) - Math.abs(Math.log(a.r)));
+  }
+
+  // Ce qui marche : liste de constats triés par importance
+  function analyse(list, kind) {
+    const out = [];
+    if (list.length < 5) return out;
+    const m = metrique(list), unite = m;
+    const moy = list.reduce((s, p) => s + (p[m] || 0), 0) / list.length;
+    const medTout = mediane(list.map(p => p[m] || 0));
+    const fois = r => (r >= 10 ? Math.round(r) : dec(r)) + '×';
+    const cap = t => t.charAt(0).toUpperCase() + t.slice(1), low = t => t.charAt(0).toLowerCase() + t.slice(1);
+    const compare = (a, b, la, lb, e) => {
+      if (a.length < 2 || b.length < 2) return;
+      const ma = mediane(a.map(p => p[m] || 0)), mb = mediane(b.map(p => p[m] || 0));
+      if (!ma || !mb) return;
+      const r = ma / mb;
+      if (r >= 1.3) out.push({ e, score: r, t: `<b>${cap(la)}</b> font <b>${fois(r)} plus de ${unite}</b> que ${low(lb)} (${short(Math.round(ma))} contre ${short(Math.round(mb))}).` });
+      else if (r <= 1 / 1.3) out.push({ e, score: 1 / r, t: `<b>${cap(lb)}</b> font <b>${fois(1 / r)} plus de ${unite}</b> que ${low(la)} (${short(Math.round(mb))} contre ${short(Math.round(ma))}).` });
+    };
+    const best = list.slice().sort((a, b) => (b[m] || 0) - (a[m] || 0))[0];
+    if (best && moy > 0 && best[m] / moy >= 1.5) {
+      const titre = nettoieT(best.texte);
+      out.push({ e: '🏆', score: 100, t: `Ton record récent : <b>${short(best[m])} ${unite}</b>, ${fois(best[m] / moy)} ta moyenne${titre ? `, avec « ${esc(titre.length > 60 ? titre.slice(0, 60) + '…' : titre)} »` : ''}.` });
+    }
+    if (kind === 'x') {
+      if (list.some(p => 'media' in p)) compare(list.filter(p => p.media), list.filter(p => !p.media), 'tes posts avec image', 'tes posts sans image', '🖼️');
+      compare(list.filter(p => p.media === 'video'), list.filter(p => p.media === 'photo'), 'tes posts avec vidéo', 'tes posts avec photo', '🎬');
+      compare(list.filter(p => nettoieT(p.texte).length <= 80), list.filter(p => nettoieT(p.texte).length > 80), 'tes posts courts', 'tes posts longs', '✂️');
+      const liens = list.filter(p => formatX(p) === 'lien');
+      if (liens.length) out.push({ e: '🔗', score: 3, t: `Tes posts « lien seul » font ${short(Math.round(mediane(liens.map(p => p[m] || 0))))} ${unite}, contre ${short(Math.round(medTout))} d'habitude. <b>Ajoute toujours une phrase et une image.</b>` });
+    } else {
+      compare(list.filter(p => p.duree && p.duree <= 20), list.filter(p => p.duree > 20), 'tes vidéos de 20 s ou moins', 'tes vidéos plus longues', '⏱️');
+    }
+    const tr = TRANCHES.map(([n, a, b]) => ({ n, items: list.filter(p => heureDe(p) >= a && heureDe(p) < b) })).filter(t => t.items.length >= 2);
+    if (tr.length >= 2) {
+      const top = tr.map(t => ({ ...t, v: mediane(t.items.map(p => p[m] || 0)) })).sort((a, b) => b.v - a.v)[0];
+      if (medTout > 0 && top.v / medTout >= 1.2) out.push({ e: '🕘', score: top.v / medTout, t: `Ce que tu postes <b>${top.n}</b> marche le mieux : <b>${short(Math.round(top.v))} ${unite}</b> en général, contre ${short(Math.round(medTout))} tous horaires confondus.` });
+    }
+    const we = p => [0, 6].includes(new Date(p.date).getDay());
+    compare(list.filter(we), list.filter(p => !we(p)), 'tes contenus du week-end', 'tes contenus de semaine', '📅');
+    const ef = effetsMots(list, m);
+    ef.filter(e => e.r >= 1).slice(0, 2).forEach(e => out.push({ e: '🔤', score: e.r, t: `Avec <b>« ${esc(e.w)} »</b> dans le texte, tu fais <b>${fois(e.r)} plus de ${unite}</b> (${short(Math.round(e.ma))} contre ${short(Math.round(e.mb))}).` }));
+    ef.filter(e => e.r < 1).slice(0, 1).forEach(e => out.push({ e: '🔤', score: 1 / e.r, t: `Avec <b>« ${esc(e.w)} »</b> dans le texte, tu fais <b>${fois(1 / e.r)} moins de ${unite}</b> (${short(Math.round(e.ma))} contre ${short(Math.round(e.mb))}).` }));
+    return out.sort((a, b) => b.score - a.score).slice(0, 6);
+  }
+
+  // Pourquoi ce contenu a marché (ou pas)
+  function explique(p, list, kind) {
+    const m = metrique(list), unite = m;
+    const med = mediane(list.map(q => q[m] || 0));
+    const perf = med ? (p[m] || 0) / med : 1;
+    const out = [];
+    const age = (Date.now() - new Date(p.date)) / 3600000;
+    if (age < 48) out.push(`⏳ Publié il y a ${Math.round(age)} h : ses ${unite} peuvent encore monter. Attends 2 jours avant de juger.`);
+    const tr = trancheDe(p);
+    if (tr) {
+      const memes = list.filter(q => trancheDe(q) === tr);
+      if (memes.length >= 3) {
+        const mt = mediane(memes.map(q => q[m] || 0)), r = mt / med;
+        const v = r >= 1.25 ? `<b>un bon créneau</b> pour toi` : r <= 0.8 ? `<b>un créneau faible</b> pour toi` : 'un créneau moyen';
+        out.push(`🕘 Posté ${tr[0]} : ${v} (${short(Math.round(mt))} ${unite} en général à ce moment-là).`);
+      }
+    }
+    if (kind === 'x') {
+      const f = formatX(p);
+      if (f === 'lien') out.push('🔗 <b>Lien tout seul</b> : X le montre très peu. Mets toujours une phrase et une image avec.');
+      else if (f === 'long') out.push('📝 <b>Long texte sans image</b> : ça accroche moins dans le fil. Ajoute une image.');
+    }
+    if (kind === 'tt' && p.duree) {
+      const court = p.duree <= 20, memes = list.filter(q => q.duree && (q.duree <= 20) === court);
+      if (memes.length >= 3) out.push(`⏱️ ${p.duree} s : tes vidéos ${court ? 'courtes' : 'longues'} font en général ${short(Math.round(mediane(memes.map(q => q[m] || 0))))} ${unite}.`);
+    }
+    effetsMots(list, m).filter(e => motsDe(p).includes(e.w)).slice(0, 2).forEach(e => out.push(e.r >= 1
+      ? `✅ Contient « ${esc(e.w)} » : ce mot te réussit (${dec(e.r)}× plus de ${unite}).`
+      : `⚠️ Contient « ${esc(e.w)} » : ce mot marche moins bien chez toi (${dec(1 / e.r)}× moins de ${unite}).`));
+    if (m === 'vues' && p.vues) {
+      const ratio = k => mediane(list.filter(q => q.vues).map(q => (q[k] || 0) / q.vues));
+      const lk = p.likes / p.vues, lkm = ratio('likes');
+      if (lkm) {
+        const r = lk / lkm;
+        if (r >= 1.3) out.push(`❤️ <b>Il a beaucoup plu</b> à ceux qui l'ont vu (${dec(lk * 100)} % de likes par vue, contre ${dec(lkm * 100)} % d'habitude).${perf < 1 ? " Le contenu est bon : c'est sa diffusion qui a coincé." : ''}`);
+        else if (r <= 0.7) out.push(`💤 Il a moins accroché que d'habitude (${dec(lk * 100)} % de likes par vue, contre ${dec(lkm * 100)} %).`);
+      }
+      const k2 = kind === 'tt' ? 'partages' : 'signets';
+      const s2 = (p[k2] || 0) / p.vues, s2m = ratio(k2);
+      if (s2m && s2 / s2m >= 1.5) out.push(`🔖 Beaucoup de ${kind === 'tt' ? 'partages' : 'enregistrements'} (${dec(s2 / s2m)}× plus que d'habitude) : c'est ce qui pousse le plus un contenu.`);
+      const k3 = kind === 'tt' ? 'commentaires' : 'reponses';
+      const s3 = (p[k3] || 0) / p.vues, s3m = ratio(k3);
+      if (s3m && s3 / s3m >= 1.5) out.push(`💬 Beaucoup de ${kind === 'tt' ? 'commentaires' : 'réponses'} (${dec(s3 / s3m)}× plus que d'habitude) : le sujet fait réagir.`);
+    }
+    if (!out.length) out.push('Rien de particulier : ce contenu est dans ta moyenne.');
+    return { perf, lignes: out };
+  }
+
+  // ================= Santé d'un compte X (estimation) =================
+  const postsNormaux = c => c.posts.filter(p => p.vues > 0 && Date.now() - new Date(p.date) > 86400000 && !['lien', 'long'].includes(formatX(p)));
+  function porteeRel(c) {
+    if (!c.P || !c.P.abonnes) return null;
+    const v = postsNormaux(c).map(p => p.vues);
+    if (v.length < 4) return null;
+    const med = mediane(v);
+    return { med, ratio: med / c.P.abonnes };
+  }
+  function sante(c) {
+    const r = { niveau: 'inconnu', titre: 'Pas assez de données', raisons: [] };
+    if (c.type !== 'x' || !c.P || !c.X.ok) return r;
+    let pire = 0;
+    const pays = c.P.paysBloques || [];
+    if (pays.length) { pire = 2; r.raisons.push(`🚫 X a <b>bloqué ton compte dans certains pays</b> (${esc(pays.join(', '))}). C'est une restriction officielle.`); }
+    if (c.P.protege) r.raisons.push('🔒 Ton compte est privé : seuls tes abonnés voient tes posts.');
+    if (c.posts.some(p => 'sensible' in p)) {
+      const n = c.posts.filter(p => p.sensible).length;
+      if (n / c.posts.length >= 0.3) { pire = Math.max(pire, 1); r.raisons.push(`⚠️ <b>${n} posts sur ${c.posts.length}</b> sont marqués « contenu sensible » par X : ils sont moins montrés.`); }
+      else r.raisons.push(n ? `ℹ️ ${n} post${n > 1 ? 's' : ''} marqué${n > 1 ? 's' : ''} « sensible » : rien d'inquiétant.` : '✅ Aucun post marqué « contenu sensible ».');
+    }
+    let vu = false;
+    const vieux = postsNormaux(c).sort((a, b) => new Date(b.date) - new Date(a.date));
+    if (vieux.length >= 7) {
+      vu = true;
+      const rec = mediane(vieux.slice(0, 3).map(p => p.vues)), av = mediane(vieux.slice(3).map(p => p.vues)), ratio = rec / av, pct = Math.round(ratio * 100);
+      if (ratio < 0.25) { pire = Math.max(pire, 2); r.raisons.push(`📉 Tes 3 derniers posts font <b>${short(Math.round(rec))} vues</b> contre ${short(Math.round(av))} d'habitude (<b>${pct} %</b>) : chute très forte.`); }
+      else if (ratio < 0.5) { pire = Math.max(pire, 1); r.raisons.push(`📉 Tes 3 derniers posts font <b>${short(Math.round(rec))} vues</b> contre ${short(Math.round(av))} d'habitude (<b>${pct} %</b>) : baisse nette.`); }
+      else if (ratio < 0.75) r.raisons.push(`➖ Tes 3 derniers posts font ${short(Math.round(rec))} vues contre ${short(Math.round(av))} d'habitude (${pct} %) : légère baisse.`);
+      else r.raisons.push(`✅ Tes derniers posts font autant de vues que d'habitude (${pct} %).`);
+    }
+    const pr = porteeRel(c);
+    if (pr && c.P.abonnes >= 3000) {
+      vu = true;
+      const pct = Math.round(pr.ratio * 100);
+      const autre = comptesX.filter(o => o !== c).map(o => ({ o, pr: porteeRel(o) })).find(x => x.pr && x.pr.ratio >= pr.ratio * 4);
+      if (autre && pr.ratio < 0.25) {
+        pire = Math.max(pire, pr.ratio < 0.1 ? 2 : 1);
+        r.raisons.push(`👻 Tes posts touchent l'équivalent de <b>${pct} % de tes abonnés</b>, alors que @${esc(autre.o.P.pseudo)} touche <b>${Math.round(autre.pr.ratio * 100)} %</b> des siens avec le même genre de contenu. Ça fait penser à un compte <b>limité depuis un moment</b>, ou à beaucoup d'abonnés inactifs.`);
+      } else if (pr.ratio < 0.1) {
+        pire = Math.max(pire, 1);
+        r.raisons.push(`👻 Tes posts touchent seulement l'équivalent de <b>${pct} % de tes abonnés</b> : c'est bas.`);
+      } else r.raisons.push(`✅ Tes posts touchent l'équivalent de ${pct} % de tes abonnés.`);
+    }
+    r.niveau = pire === 2 ? 'alerte' : pire === 1 ? 'attention' : (vu || pays.length) ? 'ok' : 'inconnu';
+    r.titre = { alerte: 'Portée limitée probable', attention: 'Portée à surveiller', ok: "Rien d'anormal", inconnu: 'Pas assez de données' }[r.niveau];
+    return r;
+  }
+  // Un check-up récent (moins de 14 jours) prime sur l'estimation
+  function etatCompte(c) {
+    if (c.type !== 'x' || !c.P) return null;
+    const h = (lire('checkup-historique-' + c.P.pseudo) || []).slice(-1)[0];
+    if (h && Date.now() - h.t < 14 * 86400000) return { niveau: h.niveau, titre: h.titre, source: 'check-up du ' + new Date(h.t).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' }) };
+    const s = sante(c);
+    return { niveau: s.niveau, titre: s.titre, source: 'estimation' };
+  }
+  const etatHtml = e => e ? `<span class="etat ${e.niveau === 'inconnu' ? '' : e.niveau}" title="${esc(e.source === 'estimation' ? 'Estimation à partir de tes stats' : 'D\'après ton ' + e.source)}"><i></i>${esc(e.titre)}</span>` : '<span class="etat vide"><i></i></span>';
+
+  // ================= Graphique =================
+  function courbe(pts, couleur, id) {
+    const W = 640, H = 220, L = 52, R = 10, Tp = 10, B = 26;
+    const vs = pts.map(p => p.v);
+    let min = Math.min(...vs), max = Math.max(...vs);
+    if (min === max) { min -= 1; max += 1; }
+    const pad = (max - min) * 0.12; min -= pad; max += pad;
+    const t0 = pts[0].t, t1 = pts[pts.length - 1].t;
+    const x = t => L + (W - L - R) * ((t - t0) / Math.max(1, t1 - t0));
+    const y = v => Tp + (H - Tp - B) * (1 - (v - min) / (max - min));
+    const path = pts.map((p, i) => (i ? 'L' : 'M') + x(p.t).toFixed(1) + ' ' + y(p.v).toFixed(1)).join(' ');
+    let g = '';
+    for (let i = 0; i <= 3; i++) {
+      const v = min + (max - min) * i / 3, yy = y(v);
+      g += `<line x1="${L}" x2="${W - R}" y1="${yy}" y2="${yy}" stroke="var(--trait)"/><text x="${L - 8}" y="${yy + 4}" text-anchor="end">${esc(max - min < 2000 ? fmt(Math.round(v)) : short(Math.round(v)))}</text>`;
+    }
+    const last = pts[pts.length - 1];
+    return `<svg class="chart" viewBox="0 0 ${W} ${H}" role="img" aria-label="Évolution des abonnés">
+      <defs><linearGradient id="${id}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${couleur}" stop-opacity=".3"/><stop offset="1" stop-color="${couleur}" stop-opacity="0"/></linearGradient></defs>
+      ${g}<path d="${path} L ${x(t1)} ${H - B} L ${L} ${H - B} Z" fill="url(#${id})"/><path d="${path}" fill="none" stroke="${couleur}" stroke-width="2.5" stroke-linejoin="round"/>
+      <circle cx="${x(last.t)}" cy="${y(last.v)}" r="5" fill="${couleur}"/>
+      <text x="${L}" y="${H - 6}">${esc(dateFr(pts[0].d))}</text><text x="${W - R}" y="${H - 6}" text-anchor="end">${esc(dateFr(last.d))}</text></svg>`;
+  }
+
+  const avatar = (c, grand) => c.P && c.P.photo
+    ? `<img class="avatar ${c.type} ${grand ? 'grand' : ''}" src="${esc(c.P.photo)}" alt="">`
+    : `<div class="avatar ${c.type} ${grand ? 'grand' : ''}" aria-hidden="true">${c.type === 'tt' ? '♪' : '𝕏'}</div>`;
+
+  // ================= Vue : accueil =================
+  function vueAccueil() {
+    const avec = tous.filter(c => c.P);
+    const total = avec.reduce((s, c) => s + c.P.abonnes, 0);
+    const deltas = avec.map(c => delta(c.hist, cleAbo(c))).filter(Boolean);
+    const somme = deltas.reduce((s, d) => s + d.v, 0);
+    const prenom = (comptesX[0].P && comptesX[0].P.pseudo) || '';
+    const evol = !deltas.length ? 'Le suivi vient de commencer : les évolutions apparaîtront à la prochaine mise à jour.'
+      : `${somme > 0 ? `<span class="up">+${fmt(somme)}</span>` : somme < 0 ? `<span class="down">−${fmt(-somme)}</span>` : 'Pas de changement'} ${deltas.every(d => d.label === 'en 24 h') ? 'sur les dernières 24 h' : 'depuis la dernière mesure'}, tous comptes réunis.`;
+    let h = `<section class="hero"><p class="bonjour">Coucou ${esc(prenom)} ♡</p>
+      <h1><span class="gros num">${fmt(total)}</span>personnes te suivent</h1><p class="evol">${evol}</p></section>`;
+
+    const pb = [];
+    for (const c of tous) {
+      const pre = (c.type === 'tt' ? 'TikTok' : pseudoDe(c)) + ' : ';
+      if (c.X.erreur) pb.push(alerteHtml(c.X.erreur, c.X.detail, pre, c.X.erreur === 'tt_config'));
+      else if (c.X.erreurActualisation) pb.push(alerteHtml(c.X.erreurActualisation, c.X.detail, pre + 'pas actualisé. ', true));
+    }
+    if (pb.length) h += `<section>${pb.join('')}</section>`;
+
+    h += `<section><h2>Tes comptes</h2><p class="sous">Clique sur un compte pour voir le détail.</p><div class="comptes">`;
+    for (const c of tous) {
+      const d = c.P ? delta(c.hist, cleAbo(c)) : null;
+      h += `<button class="compte" data-aller="${c.id}">${avatar(c)}
+        <span class="qui"><b>${esc(nomDe(c))}</b><span>${esc(pseudoDe(c))}${pseudoDe(c) ? ' sur ' : ''}${reseau(c)}</span></span>
+        <span class="chiffre">${c.P ? `<b class="num">${short(c.P.abonnes)}</b>${deltaTxt(d)}` : '<span class="neutre">non connecté</span>'}</span>
+        ${etatHtml(etatCompte(c))}</button>`;
+    }
+    h += `</div></section>`;
+
+    // À retenir : les constats les plus forts de chaque compte + alertes santé
+    const items = [];
+    for (const c of tous) {
+      if (!c.X.ok || !c.posts.length) continue;
+      const a = analyse(c.posts, c.type).filter(x => x.e !== '🏆');
+      if (a[0]) items.push({ ...a[0], src: c });
+      if (a[1]) items.push({ ...a[1], src: c, score: a[1].score * 0.8 });
+      const e = etatCompte(c);
+      if (e && (e.niveau === 'alerte' || e.niveau === 'attention')) items.push({ e: e.niveau === 'alerte' ? '🔴' : '🟠', score: 50, t: `<b>${esc(e.titre)}</b>. ${e.source === 'estimation' ? 'Fais le check-up pour en être sûr·e : ça prend 2 minutes.' : 'Résultat de ton dernier check-up.'}`, src: c });
+    }
+    items.sort((a, b) => b.score - a.score);
+    if (items.length) {
+      h += `<section><h2>À retenir</h2><p class="sous">Ce que disent tes derniers contenus.</p><ul class="retenir">`;
+      for (const it of items.slice(0, 4)) h += `<li><span class="ico" aria-hidden="true">${it.e}</span><span>${it.t}<span class="src">${esc(pseudoDe(it.src))} sur ${reseau(it.src)}</span></span></li>`;
+      h += `</ul></section>`;
+    }
+    vue.innerHTML = h;
+  }
+
+  // ================= Vue : un compte =================
+  let triActuel = lire('tri') || 'recent';
+  function vueCompte(c) {
+    const couleur = c.type === 'tt' ? 'var(--corail)' : 'var(--pervenche)';
+    let h = '';
+    if (c.X.erreur) h += alerteHtml(c.X.erreur, c.X.detail, '', c.X.erreur === 'tt_config');
+    else if (c.X.erreurActualisation) h += alerteHtml(c.X.erreurActualisation, c.X.detail, 'Pas actualisé : ', true);
+    if (!c.P) { vue.innerHTML = h || '<p class="vide-msg">Pas encore de données pour ce compte.</p>'; return; }
+    const lienProfil = c.type === 'tt' ? (c.P.lien || `https://www.tiktok.com/@${c.P.pseudo}`) : `https://x.com/${c.P.pseudo}`;
+    h += `<section class="tete">${avatar(c, true)}<div><h1>${esc(c.P.nom)}</h1><div class="pseudo"><a href="${esc(lienProfil)}" target="_blank" rel="noopener">${esc(pseudoDe(c))}</a> sur ${reseau(c)}${c.X.epoch ? `, mis à jour ${esc(ago(c.X.epoch))}` : ''}</div></div></section>`;
+    const st = c.type === 'tt'
+      ? [['Abonnés', c.P.abonnes, 'tt_abonnes'], ['Likes reçus', c.P.likes, 'tt_likes'], ['Vidéos', c.P.videos, 'tt_videos']]
+      : [['Abonnés', c.P.abonnes, 'x_abonnes'], ['Posts', c.P.posts, 'x_posts'], ['Abonnements', c.P.abonnements, 'x_abonnements']];
+    h += `<div class="stats">${st.map(([l, v, k]) => `<div class="stat"><div class="v num">${short(v)}</div><div class="l">${l}</div><div class="d">${deltaTxt(delta(c.hist, k))}</div></div>`).join('')}</div>`;
+
+    h += `<section class="deux">`;
+    if (c.type === 'x') {
+      const s = sante(c), e = etatCompte(c);
+      h += `<div class="bloc"><h3>Santé du compte ${etatHtml(e)}</h3>`;
+      if (e && e.source !== 'estimation') h += `<p class="sous" style="margin:0 0 10px">D'après ton ${esc(e.source)}. Sous ce verdict, l'estimation à partir de tes stats :</p>`;
+      h += `<ul class="raisons">${s.raisons.map(t => `<li>${t}</li>`).join('') || '<li>Il faut quelques posts de plus de 24 h pour estimer ta portée.</li>'}</ul>
+        <button class="lien-bouton" data-aller="checkup" data-compte="${esc(c.P.pseudo)}">Faire un check-up shadowban</button>
+        <p class="petit">X ne dit jamais officiellement si un compte est shadowban. Ceci est une estimation ; le check-up donne un verdict bien plus sûr.</p></div>`;
+    } else {
+      const tot = k => c.posts.reduce((s, p) => s + (p[k] || 0), 0);
+      const vues = tot('vues'), likes = tot('likes');
+      h += `<div class="bloc"><h3>En bref</h3><ul class="raisons">
+        <li>🎬 Tes ${c.posts.length} dernières vidéos font <b>${short(Math.round(mediane(c.posts.map(p => p.vues || 0))))} vues</b> en général.</li>
+        ${vues ? `<li>❤️ <b>${dec((likes + tot('commentaires') + tot('partages')) / vues * 100)} %</b> des gens qui les voient réagissent.</li>` : ''}
+        ${likes ? `<li>📤 ${dec(tot('partages') / likes * 100, 0)} partages pour 100 likes : ${tot('partages') / likes >= 0.2 ? 'tes vidéos sont beaucoup envoyées aux potes, excellent signe.' : 'dans la moyenne.'}</li>` : ''}
+      </ul></div>`;
+    }
+    h += `<div class="bloc"><h3>Abonnés dans le temps</h3>${c.hist.length >= 2 ? courbe(c.hist.map(x => ({ t: x.epoch, v: x[cleAbo(c)], d: x.date })), couleur, 'g' + c.id) : '<p class="vide-msg">La courbe apparaît après deux mises à jour.<br>Elle se remplit toute seule toutes les 3 heures.</p>'}</div></section>`;
+
+    const a = analyse(c.posts, c.type);
+    if (a.length) h += `<section><h2>Ce qui marche pour toi</h2><p class="sous">D'après tes ${c.posts.length} derniers ${c.type === 'tt' ? 'vidéos' : 'posts'}. Ce sont des tendances, pas des règles.</p><ul class="conseils">${a.map(x => `<li><span aria-hidden="true">${x.e}</span><span>${x.t}</span></li>`).join('')}</ul></section>`;
+
+    if (c.posts.length) {
+      c.posts.forEach(p => { const ex = explique(p, c.posts, c.type); p._perf = ex.perf; p._ex = ex.lignes; });
+      h += `<section><h2>${c.type === 'tt' ? 'Tes dernières vidéos' : 'Tes derniers posts'}</h2><p class="sous">Le chiffre à droite compare chaque contenu à ta normale : ×2 veut dire deux fois mieux que d'habitude. Clique pour savoir pourquoi.</p>
+        <div class="tri" role="group" aria-label="Trier">${[['recent', 'Plus récents'], ['vues', 'Plus vus'], ['perf', 'Meilleurs'], ['pire', 'Moins bons']].map(([k, l]) => `<button data-tri="${k}" aria-pressed="${triActuel === k}">${l}</button>`).join('')}</div>
+        <ul class="posts" id="liste"></ul></section>`;
+    }
+    vue.innerHTML = h;
+    remplirListe(c);
+  }
+  function remplirListe(c) {
+    const ul = document.getElementById('liste');
+    if (!ul || !c) return;
+    const tri = { recent: (a, b) => new Date(b.date) - new Date(a.date), vues: (a, b) => (b.vues || 0) - (a.vues || 0), perf: (a, b) => b._perf - a._perf, pire: (a, b) => a._perf - b._perf }[triActuel] || ((a, b) => new Date(b.date) - new Date(a.date));
+    ul.innerHTML = c.posts.slice().sort(tri).map(p => {
+      const cls = p._perf >= 1.5 ? 'up' : p._perf <= 0.6 ? 'down' : '';
+      const lien = c.type === 'tt' ? p.lien : `https://x.com/${c.P.pseudo}/status/${p.id}`;
+      const fmtTxt = c.type === 'x' ? NOMS_FORMAT[formatX(p)] : (p.duree ? p.duree + ' s' : '');
+      const chiffres = c.type === 'tt'
+        ? [['vues', p.vues], ['likes', p.likes], ['commentaires', p.commentaires], ['partages', p.partages]]
+        : [['vues', p.vues], ['likes', p.likes], ['reposts', p.reposts], ['réponses', p.reponses], ['enregistrements', p.signets]];
+      return `<li class="post"><button aria-expanded="false">
+          <span><span class="txt">${esc(nettoieT(p.texte) || '(lien seul)')}</span><span class="meta">${esc(dateHeureFr(p.date))}${fmtTxt ? ', ' + esc(fmtTxt) : ''}</span></span>
+          <span class="score"><b class="num ${cls}">×${dec(p._perf)}</b><span class="num">${short(p.vues || p.likes)} ${p.vues ? 'vues' : 'likes'}</span></span>
+        </button><div class="detail" hidden>
+          <div class="chiffres">${chiffres.map(([l, v]) => `<span><b class="num">${fmt(v || 0)}</b> ${l}</span>`).join('')}</div>
+          <ul class="raisons">${p._ex.map(l => `<li>${l}</li>`).join('')}</ul>
+          ${lien ? `<a class="voir" href="${esc(lien)}" target="_blank" rel="noopener">Voir sur ${reseau(c)} ↗</a>` : ''}
+        </div></li>`;
+    }).join('');
+    ul.querySelectorAll('.post > button').forEach(b => b.addEventListener('click', () => {
+      const d = b.nextElementSibling, ouvrir = d.hidden;
+      d.hidden = !ouvrir; b.setAttribute('aria-expanded', ouvrir); b.parentElement.classList.toggle('ouvert', ouvrir);
+    }));
+  }
+
+  // ================= Vue : check-up =================
+  const TESTS = [
+    { id: 'recherche', titre: 'Tes posts apparaissent dans la recherche', aide: () => "Ouvre le lien. Tes derniers posts doivent apparaître dans l'onglet « Récent ».", url: q => `https://x.com/search?q=${encodeURIComponent('from:' + q)}&f=live`, si: 'Search ban : tes posts sont cachés dans la recherche.' },
+    { id: 'suggestion', titre: 'On te trouve en cherchant ton pseudo', aide: () => 'Ouvre le lien (onglet « Personnes ») : ton compte doit être dans la liste.', url: q => `https://x.com/search?q=${encodeURIComponent(q)}&f=user`, si: 'Search suggestion ban : on ne te trouve plus en tapant ton pseudo.' },
+    { id: 'reponses', titre: 'Tes réponses sont visibles', aide: () => "Ouvre tes réponses, clique sur une réponse récente faite à quelqu'un, puis regarde le post d'origine : ta réponse doit apparaître sans cliquer sur « Afficher plus de réponses ».", url: q => `https://x.com/${encodeURIComponent(q)}/with_replies`, si: 'Reply deboost : tes réponses sont cachées sous les posts des autres.' }
+  ];
+  function verdict(c, res) {
+    const faits = TESTS.filter(t => res[t.id] === 'ok' || res[t.id] === 'ko'), ko = TESTS.filter(t => res[t.id] === 'ko'), s = sante(c);
+    if (ko.length) return { niveau: 'alerte', titre: 'Shadowban confirmé', fiab: faits.length === 3 ? 'environ 95 %' : 'environ 90 %', d: ko.map(t => '❌ ' + t.si).join('<br>') };
+    if (faits.length === 3) return (s.niveau === 'alerte' || s.niveau === 'attention')
+      ? { niveau: 'attention', titre: 'Pas de shadowban', fiab: 'environ 90 %', d: "X ne te cache pas. La baisse de vues vient plutôt de l'algorithme ou d'abonnés inactifs." }
+      : { niveau: 'ok', titre: 'Pas de shadowban', fiab: 'environ 95 %', d: 'Les 3 tests passent et ta portée est normale.' };
+    if (!faits.length) return { niveau: 'inconnu', titre: 'Check-up à faire', fiab: s.niveau === 'inconnu' ? '' : 'Estimation actuelle : ' + s.titre.toLowerCase(), d: 'Fais les 3 tests ci-dessous pour un verdict fiable. Ça prend 2 minutes.' };
+    return { niveau: 'inconnu', titre: `Encore ${3 - faits.length} test${3 - faits.length > 1 ? 's' : ''}`, fiab: '', d: 'Termine les tests pour avoir le verdict.' };
+  }
+  let ckCompte = lire('checkup-compte');
+  function vueCheckup() {
+    const xs = comptesX.filter(c => c.P);
+    if (!xs.length) { vue.innerHTML = '<p class="vide-msg">Le check-up sera disponible dès que tes stats X seront chargées.</p>'; return; }
+    if (!xs.some(c => c.P.pseudo === ckCompte)) ckCompte = xs[0].P.pseudo;
+    const c = xs.find(x => x.P.pseudo === ckCompte), q = c.P.pseudo;
+    const res = lire('checkup-encours-' + q) || {}, hist = lire('checkup-historique-' + q) || [], v = verdict(c, res), der = hist[hist.length - 1];
+    const autre = xs.find(x => x !== c);
+    let h = `<section class="tete" style="justify-content:space-between"><div><h1>Check-up shadowban</h1><div class="pseudo">Vérifie ce que les autres voient vraiment de ton compte.</div></div>
+      ${xs.length > 1 ? `<label><span class="sous" style="display:block;margin:0 0 4px">Compte à tester</span><select class="compte-choix" id="ck-compte">${xs.map(x => `<option value="${esc(x.P.pseudo)}" ${x === c ? 'selected' : ''}>@${esc(x.P.pseudo)}</option>`).join('')}</select></label>` : ''}</section>`;
+    h += `<section><div class="verdict ${v.niveau}"><p class="t">${esc(v.titre)}</p>${v.fiab ? `<p class="fiab">${v.fiab.startsWith('Estimation') ? esc(v.fiab) : 'Fiabilité ' + esc(v.fiab)}</p>` : ''}<p class="d">${v.d}</p>
+      ${der ? `<p class="last">Dernier check-up le ${esc(new Date(der.t).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long' }))} : ${esc(der.titre.toLowerCase())}.${Date.now() - der.t > 7 * 86400000 ? ' Pense à en refaire un.' : ''}</p>` : ''}</div>`;
+    h += `<div class="avant">⚠️ Fais les tests <b>connecté avec un autre compte</b>${autre ? ` (par exemple @${esc(autre.P.pseudo)})` : ''}, dans une <b>fenêtre privée</b> d'Opera (Ctrl + Maj + N). Connecté sur @${esc(q)}, tu verrais tout, même en cas de shadowban.</div>`;
+    h += `<ol class="etapes">${TESTS.map(t => `<li><b>${t.titre}</b><span class="aide">${t.aide(q)}</span>
+      <div class="actions"><a href="${t.url(q)}" target="_blank" rel="noopener">Ouvrir le test ↗</a>
+      <button class="choix oui" data-t="${t.id}" data-v="ok" aria-pressed="${res[t.id] === 'ok'}">✅ Oui</button>
+      <button class="choix non" data-t="${t.id}" data-v="ko" aria-pressed="${res[t.id] === 'ko'}">❌ Non</button></div></li>`).join('')}</ol>`;
+    h += `<div class="ck-bas"><button class="principal" id="ck-save" ${TESTS.every(t => res[t.id]) ? '' : 'disabled'}>Enregistrer ce check-up</button><button class="discret" id="ck-reset">Recommencer</button></div></section>`;
+    if (hist.length) h += `<section><h2>Historique</h2><ul class="histo">${hist.slice().reverse().slice(0, 12).map(x => `<li>${x.niveau === 'ok' ? '🟢' : x.niveau === 'alerte' ? '🔴' : '🟠'} ${esc(x.titre)} <span>le ${esc(new Date(x.t).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' }))}</span></li>`).join('')}</ul></section>`;
+    vue.innerHTML = h;
+    const sel = document.getElementById('ck-compte');
+    if (sel) sel.addEventListener('change', () => { ckCompte = sel.value; ecrire('checkup-compte', ckCompte); aller('checkup'); });
+    vue.querySelectorAll('.choix').forEach(b => b.addEventListener('click', () => {
+      const cur = lire('checkup-encours-' + q) || {};
+      cur[b.dataset.t] = cur[b.dataset.t] === b.dataset.v ? '' : b.dataset.v;
+      ecrire('checkup-encours-' + q, cur); aller('checkup', true);
+    }));
+    document.getElementById('ck-reset').addEventListener('click', () => { ecrire('checkup-encours-' + q, {}); aller('checkup', true); });
+    document.getElementById('ck-save').addEventListener('click', () => {
+      const cur = lire('checkup-encours-' + q) || {}, vv = verdict(c, cur), hh = lire('checkup-historique-' + q) || [];
+      hh.push({ t: Date.now(), res: cur, niveau: vv.niveau, titre: vv.titre });
+      ecrire('checkup-historique-' + q, hh.slice(-100)); ecrire('checkup-encours-' + q, {}); aller('checkup', true);
+    });
+  }
+
+  // ================= Navigation =================
+  const onglets = [{ id: 'accueil', label: 'Accueil' }]
+    .concat(tous.map(c => ({ id: c.id, label: c.type === 'tt' ? 'TikTok' : (pseudoDe(c) || 'X'), couleur: c.type === 'tt' ? 'var(--corail)' : 'var(--pervenche)' })))
+    .concat(comptesX.some(c => c.P) ? [{ id: 'checkup', label: 'Check-up' }] : []);
+  let actuel = (location.hash || '').slice(1) || lire('onglet') || 'accueil';
+  if (!onglets.some(o => o.id === actuel)) actuel = 'accueil';
+  function aller(id, garderScroll) {
+    const y = window.scrollY;
+    actuel = id; ecrire('onglet', id);
+    nav.innerHTML = onglets.map(o => `<button data-aller="${o.id}" ${o.id === actuel ? 'aria-current="page"' : ''}>${o.couleur ? `<span class="pastille" style="background:${o.couleur}"></span>` : ''}${esc(o.label)}</button>`).join('');
+    if (id === 'accueil') vueAccueil();
+    else if (id === 'checkup') vueCheckup();
+    else vueCompte(tous.find(c => c.id === id));
+    vue.insertAdjacentHTML('beforeend', `<footer>Tes stats se mettent à jour toutes seules toutes les 3 heures, même quand ton PC est éteint. Pour actualiser maintenant : appli GitHub → Actions → « Mettre à jour mes stats » → Run workflow, puis touche ↻ ici une minute après.<br><button class="discret" id="verrouiller">Verrouiller l'appli</button></footer>`);
+    window.scrollTo({ top: garderScroll ? y : 0 });
+  }
+  document.addEventListener('click', e => {
+    const b = e.target.closest('[data-aller]');
+    if (b) { if (b.dataset.compte) { ckCompte = b.dataset.compte; ecrire('checkup-compte', ckCompte); } aller(b.dataset.aller); return; }
+    const t = e.target.closest('[data-tri]');
+    if (t) { triActuel = t.dataset.tri; ecrire('tri', triActuel); document.querySelectorAll('[data-tri]').forEach(x => x.setAttribute('aria-pressed', x === t)); remplirListe(tous.find(c => c.id === actuel)); }
+  });
+  const majs = tous.filter(c => c.X && c.X.epoch).map(c => c.X.epoch);
+  document.getElementById('maj').textContent = majs.length ? 'Mis à jour ' + ago(Math.max(...majs)) : '';
+  aller(actuel);
+}
+</script>
+
+<script>
+// ================= Écran de code + déchiffrement =================
+(function () {
+  const verrou = document.getElementById('verrou'), msg = document.getElementById('vr-msg'), points = document.getElementById('points'), pave = document.getElementById('pave'), souvenir = document.getElementById('souvenir');
+  const lire = k => { try { return localStorage.getItem(k); } catch (e) { return null; } };
+  const ecrire = (k, v) => { try { v == null ? localStorage.removeItem(k) : localStorage.setItem(k, v); } catch (e) { } };
+  let saisie = '', occupe = false;
+  const b64 = s => Uint8Array.from(atob(s), c => c.charCodeAt(0));
+  async function charger() {
+    const r = await fetch('donnees.enc?t=' + Date.now(), { cache: 'no-store' });
+    if (!r.ok) throw new Error('absent');
+    return r.json();
+  }
+  async function ouvrir(code, paquet) {
+    const base = await crypto.subtle.importKey('raw', new TextEncoder().encode(code), 'PBKDF2', false, ['deriveKey']);
+    const cle = await crypto.subtle.deriveKey({ name: 'PBKDF2', salt: b64(paquet.sel), iterations: paquet.it, hash: 'SHA-256' }, base, { name: 'AES-GCM', length: 256 }, false, ['decrypt']);
+    const clair = await crypto.subtle.decrypt({ name: 'AES-GCM', iv: b64(paquet.iv) }, cle, b64(paquet.d));
+    return JSON.parse(new TextDecoder().decode(clair));
+  }
+  function dessiner() { points.querySelectorAll('i').forEach((p, i) => p.classList.toggle('on', i < saisie.length)); }
+  async function essayer(code, auto) {
+    occupe = true; msg.className = ''; msg.textContent = 'Ouverture…';
+    let paquet;
+    try { paquet = await charger(); }
+    catch (e) { msg.className = 'err'; msg.textContent = "Pas encore de stats en ligne. Lance la mise à jour sur GitHub."; occupe = false; saisie = ''; dessiner(); return; }
+    try {
+      window.STATS = await ouvrir(code, paquet);
+      if (souvenir.checked) ecrire('code-app', code);
+      verrou.hidden = true;
+      demarrer();
+      document.getElementById('rafraichir').onclick = () => location.reload();
+      const v = document.getElementById('verrouiller');
+      document.addEventListener('click', e => { if (e.target && e.target.id === 'verrouiller') { ecrire('code-app', null); location.reload(); } });
+    } catch (e) {
+      if (auto) ecrire('code-app', null);
+      msg.className = 'err'; msg.textContent = auto ? 'Entre ton code' : 'Code incorrect';
+      if (!auto) { points.classList.remove('secoue'); void points.offsetWidth; points.classList.add('secoue'); if (navigator.vibrate) navigator.vibrate(120); }
+      saisie = ''; dessiner();
+    }
+    occupe = false;
+  }
+  function touche(t) {
+    if (occupe) return;
+    if (t === 'eff') saisie = saisie.slice(0, -1);
+    else if (saisie.length < 4) saisie += t;
+    dessiner();
+    if (saisie.length === 4) essayer(saisie, false);
+  }
+  pave.innerHTML = ['1','2','3','4','5','6','7','8','9','vide','0','eff'].map(t => t === 'vide' ? '<button class="vide" tabindex="-1" aria-hidden="true"></button>' : t === 'eff' ? '<button class="eff" data-t="eff" aria-label="Effacer">⌫</button>' : `<button data-t="${t}">${t}</button>`).join('');
+  pave.addEventListener('click', e => { const b = e.target.closest('[data-t]'); if (b) touche(b.dataset.t); });
+  document.addEventListener('keydown', e => { if (verrou.hidden) return; if (/^[0-9]$/.test(e.key)) touche(e.key); else if (e.key === 'Backspace') touche('eff'); });
+  const garde = lire('code-app');
+  souvenir.checked = !!garde;
+  if (!window.isSecureContext || !crypto.subtle) { msg.className = 'err'; msg.textContent = 'Ouvre cette page depuis son adresse https.'; }
+  else if (garde) essayer(garde, true);
+})();
+</script>
+</body>
+</html>
