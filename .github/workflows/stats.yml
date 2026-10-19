@@ -1,0 +1,56 @@
+name: Mettre à jour mes stats
+
+on:
+  schedule:
+    - cron: '7 */3 * * *'   # toutes les 3 heures
+  workflow_dispatch:         # bouton « Run workflow » (aussi dans l'appli GitHub)
+
+permissions:
+  contents: write
+
+concurrency:
+  group: stats
+  cancel-in-progress: false
+
+jobs:
+  maj:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Préparer la configuration
+        env:
+          X_BEARER_TOKEN: ${{ secrets.X_BEARER_TOKEN }}
+          TIKTOK_CLIENT_KEY: ${{ secrets.TIKTOK_CLIENT_KEY }}
+          TIKTOK_CLIENT_SECRET: ${{ secrets.TIKTOK_CLIENT_SECRET }}
+        run: |
+          printf 'X_BEARER_TOKEN=%s\nX_PSEUDO=EvaNya\nDELAI_MINUTES=5\n' "$X_BEARER_TOKEN" > config.txt
+          printf 'TIKTOK_CLIENT_KEY=%s\nTIKTOK_CLIENT_SECRET=%s\n' "$TIKTOK_CLIENT_KEY" "$TIKTOK_CLIENT_SECRET" > config-tiktok.txt
+
+      - name: Ouvrir le coffre
+        env:
+          CLE_COFFRE: ${{ secrets.CLE_COFFRE }}
+          TIKTOK_REFRESH_TOKEN: ${{ secrets.TIKTOK_REFRESH_TOKEN }}
+        run: node outils/coffre.js ouvrir
+
+      - name: Récupérer les stats X et TikTok
+        shell: pwsh
+        run: ./outils/actualiser.ps1 -Auto
+
+      - name: Chiffrer
+        env:
+          CLE_COFFRE: ${{ secrets.CLE_COFFRE }}
+          CODE_APP: ${{ secrets.CODE_APP }}
+        run: |
+          node outils/coffre.js fermer
+          node outils/coffre.js page
+
+      - name: Publier
+        run: |
+          rm -f config.txt config-tiktok.txt
+          git config user.name "mes-stats"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add donnees.enc etat.enc
+          git commit -m "Stats du $(date -u '+%d/%m %H:%M') UTC" || exit 0
+          git push
