@@ -210,6 +210,29 @@
   .pave .eff { background: none; font-size: 22px; }
   .souvenir { display: flex; gap: 9px; align-items: center; justify-content: center; margin-top: 26px; color: var(--lavande); font-size: 14px; }
   .souvenir input { width: 18px; height: 18px; accent-color: var(--pervenche); }
+
+  /* ---------- Mise à jour instantanée ---------- */
+  .rafraichir { transition: transform .15s; }
+  .rafraichir:active { transform: scale(.88); }
+  .rafraichir.tourne { animation: tourne 1s linear infinite; pointer-events: none; }
+  @keyframes tourne { to { transform: rotate(360deg); } }
+  #toast { position: fixed; left: 50%; bottom: max(20px, env(safe-area-inset-bottom, 0px)); transform: translate(-50%, 160%); background: var(--brume); border: 1px solid var(--trait); border-radius: 999px; padding: 11px 18px; font-weight: 700; font-size: 14px; z-index: 40; transition: transform .35s cubic-bezier(.2, .9, .3, 1.3); display: flex; gap: 10px; align-items: center; max-width: calc(100vw - 32px); box-shadow: 0 10px 30px rgba(0, 0, 0, .35); }
+  #toast.visible { transform: translate(-50%, 0); }
+  #toast .barre-prog { width: 70px; height: 5px; border-radius: 99px; background: var(--trait); overflow: hidden; flex: none; }
+  #toast .barre-prog i { display: block; height: 100%; width: 0; background: linear-gradient(90deg, var(--pervenche), var(--corail)); transition: width .6s; }
+  #toast.ok { border-color: var(--menthe); } #toast.err { border-color: var(--cerise); }
+  #feuille { position: fixed; inset: 0; z-index: 45; background: rgba(10, 6, 16, .6); display: grid; align-items: end; justify-items: center; }
+  #feuille[hidden] { display: none; }
+  #feuille .f { background: var(--velours); width: min(560px, 100%); border-radius: 22px 22px 0 0; padding: 22px 20px max(22px, env(safe-area-inset-bottom, 0px)); max-height: 88vh; overflow: auto; }
+  #feuille h2 { margin-bottom: 8px; }
+  #feuille ol { padding-left: 20px; font-size: 14px; line-height: 1.6; color: var(--lait); }
+  #feuille ol li { margin-bottom: 6px; }
+  #feuille a { color: var(--pervenche); }
+  #feuille code { background: var(--brume); padding: 1px 6px; border-radius: 6px; }
+  #feuille input[type=password] { width: 100%; background: var(--nuit); border: 1px solid var(--trait); border-radius: 12px; padding: 12px 14px; color: var(--lait); font: inherit; margin: 6px 0 12px; }
+  #feuille .lignes { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+  #qr { background: #fff; padding: 12px; border-radius: 14px; width: fit-content; margin: 12px auto 0; }
+  #qr img, #qr canvas { display: block; }
 </style>
 </head>
 <body>
@@ -219,6 +242,15 @@
   <div class="maj" id="maj"></div><button class="rafraichir" id="rafraichir" aria-label="Actualiser" title="Recharger les dernières stats">↻</button>
 </div></header>
 <main id="vue"></main>
+<div id="toast" role="status" aria-live="polite"></div>
+<div id="feuille" hidden>
+  <div class="f" role="dialog" aria-modal="true" aria-labelledby="f-titre">
+    <h2 id="f-titre">Bouton de mise à jour instantanée</h2>
+    <p class="sous" id="f-etat"></p>
+    <div id="f-corps"></div>
+    <div class="lignes" style="margin-top:14px"><button class="discret" id="f-fermer">Fermer</button></div>
+  </div>
+</div>
 <div id="verrou">
   <div class="vr">
     <svg viewBox="0 0 32 32" aria-hidden="true"><rect x="1" y="1" width="30" height="30" rx="9" fill="#2a2337"/><rect x="7" y="16" width="5" height="9" rx="2" fill="#9fadff"/><rect x="13.5" y="11" width="5" height="14" rx="2" fill="#c9a7ff"/><rect x="20" y="6" width="5" height="19" rx="2" fill="#ff7c9c"/></svg>
@@ -619,7 +651,7 @@ function demarrer() {
         ${likes ? `<li>📤 ${dec(tot('partages') / likes * 100, 0)} partages pour 100 likes : ${tot('partages') / likes >= 0.2 ? 'tes vidéos sont beaucoup envoyées aux potes, excellent signe.' : 'dans la moyenne.'}</li>` : ''}
       </ul></div>`;
     }
-    h += `<div class="bloc"><h3>Abonnés dans le temps</h3>${c.hist.length >= 2 ? courbe(c.hist.map(x => ({ t: x.epoch, v: x[cleAbo(c)], d: x.date })), couleur, 'g' + c.id) : '<p class="vide-msg">La courbe apparaît après deux mises à jour.<br>Elle se remplit toute seule toutes les 3 heures.</p>'}</div></section>`;
+    h += `<div class="bloc"><h3>Abonnés dans le temps</h3>${c.hist.length >= 2 ? courbe(c.hist.map(x => ({ t: x.epoch, v: x[cleAbo(c)], d: x.date })), couleur, 'g' + c.id) : '<p class="vide-msg">La courbe apparaît après deux mises à jour.<br>Elle se remplit toute seule toutes les 30 minutes.</p>'}</div></section>`;
 
     const a = analyse(c.posts, c.type);
     if (a.length) h += `<section><h2>Ce qui marche pour toi</h2><p class="sous">D'après tes ${c.posts.length} derniers ${c.type === 'tt' ? 'vidéos' : 'posts'}. Ce sont des tendances, pas des règles.</p><ul class="conseils">${a.map(x => `<li><span aria-hidden="true">${x.e}</span><span>${x.t}</span></li>`).join('')}</ul></section>`;
@@ -722,21 +754,140 @@ function demarrer() {
     if (id === 'accueil') vueAccueil();
     else if (id === 'checkup') vueCheckup();
     else vueCompte(tous.find(c => c.id === id));
-    vue.insertAdjacentHTML('beforeend', `<footer>Tes stats se mettent à jour toutes seules toutes les 3 heures, même quand ton PC est éteint. Pour actualiser maintenant : appli GitHub → Actions → « Mettre à jour mes stats » → Run workflow, puis touche ↻ ici une minute après.<br><button class="discret" id="verrouiller">Verrouiller l'appli</button></footer>`);
+    vue.insertAdjacentHTML('beforeend', `<footer>Tes stats se mettent à jour toutes seules toutes les 30 minutes, même quand ton PC est éteint. Touche ↻ en haut pour une mise à jour immédiate.<br><button class="discret" id="reglage-bouton">Réglages du bouton ↻</button> · <button class="discret" id="verrouiller">Verrouiller l'appli</button></footer>`);
     window.scrollTo({ top: garderScroll ? y : 0 });
   }
-  document.addEventListener('click', e => {
+  window.__clicNav = e => {
     const b = e.target.closest('[data-aller]');
     if (b) { if (b.dataset.compte) { ckCompte = b.dataset.compte; ecrire('checkup-compte', ckCompte); } aller(b.dataset.aller); return; }
     const t = e.target.closest('[data-tri]');
     if (t) { triActuel = t.dataset.tri; ecrire('tri', triActuel); document.querySelectorAll('[data-tri]').forEach(x => x.setAttribute('aria-pressed', x === t)); remplirListe(tous.find(c => c.id === actuel)); }
-  });
+  };
+  if (!window.__clicPose) { window.__clicPose = true; document.addEventListener('click', e => window.__clicNav && window.__clicNav(e)); }
   const majs = tous.filter(c => c.X && c.X.epoch).map(c => c.X.epoch);
   document.getElementById('maj').textContent = majs.length ? 'Mis à jour ' + ago(Math.max(...majs)) : '';
   aller(actuel);
 }
 </script>
 
+
+<script>
+// ================= Mise à jour instantanée + sons =================
+(function () {
+  const DEPOT = 'EvaNya67/stats-fbn1e9qiy0', API = 'https://api.github.com/repos/' + DEPOT;
+  const lire = k => { try { return localStorage.getItem(k); } catch (e) { return null; } };
+  const ecrire = (k, v) => { try { v == null ? localStorage.removeItem(k) : localStorage.setItem(k, v); } catch (e) { } };
+  // La clé du bouton arrive chiffrée avec les stats (secret BOUTON_PAT sur GitHub) : rien à faire sur chaque appareil
+  const cleBouton = () => lire('cle-bouton') || (window.STATS && window.STATS._bouton) || null;
+
+  // ---- Sons (générés par le navigateur, aucun fichier) ----
+  let ctx = null;
+  const audio = () => { try { ctx = ctx || new (window.AudioContext || window.webkitAudioContext)(); if (ctx.state === 'suspended') ctx.resume(); return ctx; } catch (e) { return null; } };
+  function note(f0, f1, debut, duree, type, vol) {
+    const a = audio(); if (!a) return;
+    const t = a.currentTime + debut, o = a.createOscillator(), g = a.createGain();
+    o.type = type; o.frequency.setValueAtTime(f0, t); o.frequency.exponentialRampToValueAtTime(f1, t + duree * 0.6);
+    g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(vol, t + 0.012); g.gain.exponentialRampToValueAtTime(0.0001, t + duree);
+    o.connect(g).connect(a.destination); o.start(t); o.stop(t + duree + 0.02);
+  }
+  const son = {
+    clic: () => { note(420, 980, 0, 0.13, 'sine', 0.35); note(900, 1500, 0.045, 0.1, 'sine', 0.12); },                         // « plop » de bulle
+    fini: () => { [1046.5, 1318.5, 1568, 2093].forEach((f, i) => note(f, f, i * 0.085, 0.55 - i * 0.05, 'triangle', 0.22)); }, // petit carillon
+    erreur: () => { note(330, 220, 0, 0.22, 'sine', 0.3); note(260, 170, 0.16, 0.28, 'sine', 0.25); }
+  };
+
+  // ---- Petit message en bas ----
+  const toast = document.getElementById('toast');
+  let tToast;
+  function montrer(texte, prog, cls) {
+    clearTimeout(tToast);
+    toast.className = 'visible ' + (cls || '');
+    toast.innerHTML = `<span>${texte}</span>` + (prog != null ? `<span class="barre-prog"><i style="width:${Math.round(prog)}%"></i></span>` : '');
+    if (cls) tToast = setTimeout(() => { toast.className = ''; }, 3200);
+  }
+
+  // ---- Réglages du bouton ----
+  const feuille = document.getElementById('feuille'), corps = document.getElementById('f-corps'), etat = document.getElementById('f-etat');
+  function ouvrirReglages() {
+    const cle = cleBouton();
+    etat.textContent = cle ? '✅ Le bouton ↻ est activé : touche-le pour mettre tes stats à jour tout de suite.' : "Le bouton ↻ n'est pas encore activé. Ça se règle une seule fois, sur ton PC :";
+    corps.innerHTML = cle ? '<p class="petit">La clé du bouton est rangée chiffrée avec tes stats : elle marche automatiquement sur tous tes appareils après le code.</p>' : `<ol>
+        <li>Ouvre <a href="https://github.com/settings/personal-access-tokens/new" target="_blank" rel="noopener">cette page GitHub</a>.</li>
+        <li><b>Token name</b> : <code>Bouton Mes stats</code>. <b>Expiration</b> : la plus longue possible.</li>
+        <li><b>Repository access</b> : « Only select repositories » → <code>stats-fbn1e9qiy0</code>.</li>
+        <li><b>Permissions</b> → <b>Actions</b> : « Read and write ». Rien d'autre.</li>
+        <li><b>Generate token</b>, puis copie la clé (elle commence par <code>github_pat_</code>).</li>
+        <li>Ajoute-la comme secret <code>BOUTON_PAT</code> dans ton espace GitHub (Settings → Secrets and variables → Actions).</li>
+        <li>Lance une mise à jour une fois depuis GitHub. Ensuite, le bouton ↻ marche partout.</li>
+      </ol>`;
+    feuille.hidden = false;
+  }
+  document.getElementById('f-fermer').onclick = () => { feuille.hidden = true; };
+  feuille.addEventListener('click', e => { if (e.target === feuille) feuille.hidden = true; });
+  document.addEventListener('click', e => { if (e.target && e.target.id === 'reglage-bouton') ouvrirReglages(); });
+
+  // ---- Mise à jour instantanée ----
+  const attendre = ms => new Promise(r => setTimeout(r, ms));
+  const ivActuel = async () => { try { const r = await fetch('donnees.enc?t=' + Date.now(), { cache: 'no-store' }); return (await r.json()).iv; } catch (e) { return null; } };
+  let enCours = false;
+  window.majInstantanee = async function () {
+    if (enCours) return;
+    son.clic();
+    const cle = cleBouton();
+    if (!cle) { ouvrirReglages(); return; }
+    const der = Number(lire('derniere-maj') || 0);
+    if (Date.now() - der < 90000) { montrer('Déjà à jour, réessaie dans une minute', null, 'ok'); return; }
+    enCours = true;
+    const bouton = document.getElementById('rafraichir'); bouton.classList.add('tourne');
+    const h = { Authorization: 'Bearer ' + cle, Accept: 'application/vnd.github+json', 'X-GitHub-Api-Version': '2022-11-28' };
+    const fin = (msg, ok) => { enCours = false; bouton.classList.remove('tourne'); (ok ? son.fini : son.erreur)(); montrer(msg, null, ok ? 'ok' : 'err'); };
+    try {
+      const ivAvant = await ivActuel();
+      const t0 = Date.now();
+      montrer('Récupération de tes stats…', 8);
+      const r = await fetch(API + '/actions/workflows/stats.yml/dispatches', { method: 'POST', headers: h, body: JSON.stringify({ ref: 'main' }) });
+      if (r.status === 401 || r.status === 403 || r.status === 404) { fin('Clé du bouton refusée : vérifie-la dans les réglages', false); return; }
+      if (!r.ok) { fin('GitHub ne répond pas, réessaie plus tard', false); return; }
+      ecrire('derniere-maj', String(Date.now()));
+      // 1) attendre la fin du travail sur GitHub
+      let run = null;
+      while (Date.now() - t0 < 240000) {
+        await attendre(4000);
+        const rr = await fetch(API + '/actions/workflows/stats.yml/runs?per_page=3&event=workflow_dispatch', { headers: h, cache: 'no-store' });
+        if (rr.ok) {
+          const j = await rr.json();
+          run = (j.workflow_runs || []).find(x => new Date(x.created_at).getTime() >= t0 - 15000) || null;
+          if (run && run.status === 'completed') break;
+          montrer('Récupération de tes stats…', run && run.status === 'in_progress' ? 30 + Math.min(30, (Date.now() - t0) / 1500) : 15);
+        }
+      }
+      if (!run || run.status !== 'completed') { fin('Ça prend plus de temps que prévu, touche ↻ dans un moment', false); return; }
+      if (run.conclusion !== 'success') { fin('La mise à jour a échoué, réessaie dans quelques minutes', false); return; }
+      // 2) attendre que la page en ligne soit republiée
+      montrer('Publication…', 70);
+      while (Date.now() - t0 < 300000) {
+        await attendre(4000);
+        const iv = await ivActuel();
+        if (iv && iv !== ivAvant) {
+          montrer('Presque…', 100);
+          try { await window.rechargerStats(); fin('Tes stats sont à jour ✨', true); }
+          catch (e) { try { sessionStorage.setItem('juste-maj', '1'); } catch (x) { } location.reload(); }
+          return;
+        }
+        montrer('Publication…', Math.min(95, 70 + (Date.now() - t0) / 4000));
+      }
+      fin('Publication en retard, touche ↻ dans une minute', false);
+    } catch (e) { fin('Pas de connexion internet ?', false); }
+  };
+  // Après le rechargement qui suit une mise à jour : carillon + message
+  window.apresOuverture = function () {
+    let a = null, b = null;
+    try { a = sessionStorage.getItem('juste-maj'); b = sessionStorage.getItem('cle-recue'); sessionStorage.removeItem('juste-maj'); sessionStorage.removeItem('cle-recue'); } catch (e) { }
+    if (a) { son.fini(); montrer('Tes stats sont à jour ✨', null, 'ok'); }
+    else if (b) montrer('Bouton ↻ activé sur cet appareil', null, 'ok');
+  };
+})();
+</script>
 <script>
 // ================= Écran de code + déchiffrement =================
 (function () {
@@ -764,14 +915,17 @@ function demarrer() {
     catch (e) { msg.className = 'err'; msg.textContent = "Pas encore de stats en ligne. Lance la mise à jour sur GitHub."; occupe = false; saisie = ''; dessiner(); return; }
     try {
       window.STATS = await ouvrir(code, paquet);
+      window.rechargerStats = async () => { const p2 = await charger(); window.STATS = await ouvrir(code, p2); demarrer(); };
       if (souvenir.checked) ecrire('code-app', code);
+      try { sessionStorage.setItem('code-session', code); } catch (e) { }
       verrou.hidden = true;
       demarrer();
-      document.getElementById('rafraichir').onclick = () => location.reload();
+      document.getElementById('rafraichir').onclick = () => window.majInstantanee && window.majInstantanee();
+      if (window.apresOuverture) window.apresOuverture();
       const v = document.getElementById('verrouiller');
-      document.addEventListener('click', e => { if (e.target && e.target.id === 'verrouiller') { ecrire('code-app', null); location.reload(); } });
+      document.addEventListener('click', e => { if (e.target && e.target.id === 'verrouiller') { ecrire('code-app', null); try { sessionStorage.removeItem('code-session'); } catch (x) { } location.reload(); } });
     } catch (e) {
-      if (auto) ecrire('code-app', null);
+      if (auto) { ecrire('code-app', null); try { sessionStorage.removeItem('code-session'); } catch (e) { } }
       msg.className = 'err'; msg.textContent = auto ? 'Entre ton code' : 'Code incorrect';
       if (!auto) { points.classList.remove('secoue'); void points.offsetWidth; points.classList.add('secoue'); if (navigator.vibrate) navigator.vibrate(120); }
       saisie = ''; dessiner();
@@ -788,8 +942,9 @@ function demarrer() {
   pave.innerHTML = ['1','2','3','4','5','6','7','8','9','vide','0','eff'].map(t => t === 'vide' ? '<button class="vide" tabindex="-1" aria-hidden="true"></button>' : t === 'eff' ? '<button class="eff" data-t="eff" aria-label="Effacer">⌫</button>' : `<button data-t="${t}">${t}</button>`).join('');
   pave.addEventListener('click', e => { const b = e.target.closest('[data-t]'); if (b) touche(b.dataset.t); });
   document.addEventListener('keydown', e => { if (verrou.hidden) return; if (/^[0-9]$/.test(e.key)) touche(e.key); else if (e.key === 'Backspace') touche('eff'); });
-  const garde = lire('code-app');
-  souvenir.checked = !!garde;
+  let garde = lire('code-app');
+  if (!garde) { try { garde = sessionStorage.getItem('code-session'); } catch (e) { } }
+  souvenir.checked = !!lire('code-app');
   if (!window.isSecureContext || !crypto.subtle) { msg.className = 'err'; msg.textContent = 'Ouvre cette page depuis son adresse https.'; }
   else if (garde) essayer(garde, true);
 })();
