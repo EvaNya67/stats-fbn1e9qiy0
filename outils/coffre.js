@@ -46,9 +46,11 @@ if (mode === 'ouvrir') {
   fs.writeFileSync(path.join(racine, 'etat.enc'), chiffrer(JSON.stringify(fichiers), besoin('CLE_COFFRE'), ITER_ETAT));
   console.log(`Coffre fermé : ${Object.keys(fichiers).length} fichiers.`);
 } else if (mode === 'page') {
-  let js = fs.readFileSync(path.join(dossier, 'donnees.js'), 'utf8').replace(/^﻿/, '').trim();
+  let js = fs.readFileSync(path.join(dossier, 'donnees.js'), 'utf8').replace(/^\uFEFF/, '').trim();
   js = js.replace(/^window\.STATS\s*=\s*/, '').replace(/;\s*$/, '');
-  JSON.parse(js); // vérifie que c'est du JSON valide
+  const stats = JSON.parse(js);
+  // Clé du bouton ↻ (droits limités aux mises à jour de ce dépôt), chiffrée avec le reste
+  if (process.env.BOUTON_PAT) { stats._bouton = process.env.BOUTON_PAT.trim(); js = JSON.stringify(stats); }
   fs.writeFileSync(path.join(racine, 'donnees.enc'), chiffrer(js, besoin('CODE_APP').trim(), ITER_PAGE));
   console.log('Page chiffrée.');
 } else { console.error('Mode inconnu'); process.exit(1); }
