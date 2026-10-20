@@ -8,14 +8,14 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Mes stats">
-<meta name="theme-color" content="#17121f">
+<meta name="theme-color" content="#000000">
 <link rel="apple-touch-icon" href="icone-180.png">
 <link rel="icon" href="icone-180.png">
 <link rel="manifest" href="manifest.webmanifest">
 <title>Mes stats</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=Nunito:wght@400;600;700;800&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
 <style>
   /* Plan : une page calme couleur prune nuit, une seule chose qui ressort (la phrase-titre de l'accueil),
      des onglets pour ne montrer qu'un compte à la fois. Bleu pervenche = X, rose corail = TikTok. */
@@ -233,11 +233,124 @@
   #feuille .lignes { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
   #qr { background: #fff; padding: 12px; border-radius: 14px; width: fit-content; margin: 12px auto 0; }
   #qr img, #qr canvas { display: block; }
+
+  /* ================= Style « épuré » (inspiré iOS) =================
+     Noir profond, cartes gris anthracite, couleurs système, typo SF Pro / Inter. */
+  :root {
+    --nuit: #000000;
+    --velours: #1c1c1e;
+    --brume: #2c2c2e;
+    --trait: rgba(84, 84, 88, .42);
+    --lait: #f5f5f7;
+    --lavande: #98989f;
+    --pervenche: #4da3ff;  /* X */
+    --corail: #ff375f;     /* TikTok */
+    --lilas: #bf5af2;      /* Discord */
+    --menthe: #30d158;
+    --miel: #ff9f0a;
+    --cerise: #ff453a;
+    --titre: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Inter", "Segoe UI Variable Display", "Segoe UI", system-ui, sans-serif;
+    --texte: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Inter", "Segoe UI Variable Text", "Segoe UI", system-ui, sans-serif;
+  }
+  body { font-size: 15px; letter-spacing: -0.006em; line-height: 1.5; }
+  :focus-visible { outline-color: var(--pervenche); }
+
+  /* Barre du haut : verre dépoli + onglets en « segmented control » */
+  .barre { background: rgba(0, 0, 0, .72); -webkit-backdrop-filter: saturate(180%) blur(20px); backdrop-filter: saturate(180%) blur(20px); border-bottom: .5px solid var(--trait); }
+  .barre-in { padding-top: 10px; padding-bottom: 10px; }
+  .marque { font-weight: 600; font-size: 17px; letter-spacing: -0.02em; }
+  nav { background: var(--velours); border-radius: 11px; padding: 3px; gap: 2px; flex: 0 1 auto; margin: 0 auto; }
+  nav button { border-radius: 8px; padding: 6px 13px; font-weight: 600; font-size: 13.5px; color: var(--lavande); transition: background .2s, color .2s; }
+  nav button:hover { background: transparent; color: var(--lait); }
+  nav button[aria-current="page"] { background: #3a3a3c; color: var(--lait); box-shadow: 0 2px 8px rgba(0, 0, 0, .35); }
+  nav .pastille { width: 6px; height: 6px; }
+  .maj { font-size: 12.5px; }
+
+  main { padding-top: 44px; }
+  section + section { margin-top: 48px; }
+  h2 { font-weight: 700; font-size: 22px; letter-spacing: -0.022em; }
+  .sous { font-size: 14px; }
+
+  /* Accueil : grand chiffre centré, comme une page produit */
+  .hero { text-align: center; padding: 18px 0 8px; }
+  .hero .bonjour { font-weight: 600; font-size: 15px; }
+  .hero h1 { font-weight: 600; font-size: clamp(22px, 3.4vw, 32px); letter-spacing: -0.02em; color: var(--lavande); }
+  .hero h1 .gros { font-weight: 700; letter-spacing: -0.045em; font-size: clamp(72px, 14vw, 136px); line-height: 1; margin-bottom: 6px;
+    background: linear-gradient(180deg, #ffffff 30%, #a8a8b0 100%); -webkit-background-clip: text; background-clip: text; color: transparent; }
+  .hero .evol { font-size: 15px; }
+
+  /* Listes groupées façon Réglages */
+  .comptes, .conseils, .posts { background: var(--velours); border: 0; border-radius: 20px; gap: 0; }
+  .compte, .conseils li, .post > button { background: transparent; position: relative; }
+  .compte + .compte::before, .conseils li + li::before, .post + .post::before { content: ""; position: absolute; top: 0; right: 0; left: 78px; border-top: .5px solid var(--trait); }
+  .conseils li + li::before { left: 58px; }
+  .post + .post::before { left: 18px; }
+  .post { position: relative; }
+  .compte:hover, .post > button:hover, .post.ouvert > button { background: rgba(255, 255, 255, .04); }
+  .compte .qui b { font-weight: 600; }
+  .compte .chiffre b { font-weight: 600; letter-spacing: -0.02em; }
+  .etat { font-weight: 600; font-size: 12.5px; background: var(--brume); }
+  .etat i { width: 7px; height: 7px; }
+
+  .retenir li, .bloc, .verdict, .avant, .etapes li { border-radius: 20px; background: var(--velours); }
+  .retenir li { padding: 16px 18px; }
+  .bloc { padding: 22px; }
+  .bloc h3 { font-weight: 600; font-size: 17px; letter-spacing: -0.015em; }
+
+  .avatar { font-weight: 600; }
+  .avatar.x, .avatar.tt, .avatar.dc { box-shadow: 0 0 0 2px var(--nuit), 0 0 0 3.5px var(--c, var(--pervenche)); }
+  .avatar.tt { --c: var(--corail); } .avatar.dc { --c: var(--lilas); }
+
+  /* Page d'un compte : chiffres clés dans des tuiles */
+  .tete h1 { font-weight: 700; letter-spacing: -0.03em; }
+  .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; border-top: 0; padding-top: 0; margin-top: 28px; margin-bottom: 16px; }
+  .stat { background: var(--velours); border-radius: 20px; padding: 18px 20px; }
+  .stat .v { font-weight: 700; font-size: 34px; letter-spacing: -0.035em; }
+  .stat .l { font-size: 13.5px; font-weight: 500; }
+  .deux { gap: 12px; }
+
+  .tri { background: var(--velours); border-radius: 11px; padding: 3px; gap: 2px; width: fit-content; max-width: 100%; }
+  .tri button { border: 0; border-radius: 8px; font-weight: 600; padding: 6px 12px; }
+  .tri button[aria-pressed="true"] { background: #3a3a3c; border: 0; box-shadow: 0 2px 8px rgba(0, 0, 0, .35); }
+  .post .score b { font-weight: 600; }
+  .detail { background: rgba(255, 255, 255, .04); }
+
+  .alerte-msg { background: rgba(255, 69, 58, .12); border: 0; border-radius: 16px; }
+  .alerte-msg.doux { background: rgba(255, 159, 10, .12); }
+
+  .verdict { border-left: 0; position: relative; overflow: hidden; padding-left: 26px; }
+  .verdict::before { content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 5px; background: var(--lavande); }
+  .verdict.ok::before { background: var(--menthe); } .verdict.attention::before { background: var(--miel); } .verdict.alerte::before { background: var(--cerise); }
+  .verdict .t { font-weight: 700; letter-spacing: -0.025em; }
+  .etapes li::before { font-weight: 600; }
+
+  .principal { background: var(--pervenche); color: #fff; font-weight: 600; padding: 11px 20px; }
+  .lien-bouton, .choix, select.compte-choix { background: var(--brume); border: 0; font-weight: 600; }
+  .choix[aria-pressed="true"].oui { background: rgba(48, 209, 88, .16); }
+  .choix[aria-pressed="true"].non { background: rgba(255, 69, 58, .16); }
+  .discret { font-weight: 600; text-decoration: none; color: var(--pervenche); }
+  footer { border-top: .5px solid var(--trait); font-size: 12.5px; text-align: center; }
+
+  @media (max-width: 760px) {
+    nav { margin: 0; flex: 1 1 100%; }
+    .hero { padding-top: 4px; }
+    .compte + .compte::before { left: 70px; }
+    .compte .etat.vide { display: none; }
+    .stats { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+    .stat { padding: 14px; border-radius: 16px; }
+    .stat .v { font-size: 24px; }
+  }
+  @media (prefers-reduced-motion: no-preference) {
+    main > * { animation: apparait .5s cubic-bezier(.2, .8, .2, 1) both; }
+    main > *:nth-child(2) { animation-delay: .05s; } main > *:nth-child(3) { animation-delay: .1s; } main > *:nth-child(4) { animation-delay: .15s; }
+    @keyframes apparait { from { opacity: 0; transform: translateY(10px); } }
+  }
+  #verrou { background: radial-gradient(120% 70% at 50% 0%, #1c1c1e 0%, #000 65%); }
 </style>
 </head>
 <body>
 <header class="barre"><div class="barre-in">
-  <div class="marque"><svg viewBox="0 0 32 32" aria-hidden="true"><rect x="1" y="1" width="30" height="30" rx="9" fill="#2a2337"/><rect x="7" y="16" width="5" height="9" rx="2" fill="#9fadff"/><rect x="13.5" y="11" width="5" height="14" rx="2" fill="#c9a7ff"/><rect x="20" y="6" width="5" height="19" rx="2" fill="#ff7c9c"/></svg>Mes stats</div>
+  <div class="marque"><svg viewBox="0 0 32 32" aria-hidden="true"><rect x="1" y="1" width="30" height="30" rx="9" fill="#1c1c1e"/><rect x="7" y="16" width="5" height="9" rx="2" fill="#4da3ff"/><rect x="13.5" y="11" width="5" height="14" rx="2" fill="#bf5af2"/><rect x="20" y="6" width="5" height="19" rx="2" fill="#ff375f"/></svg>Mes stats</div>
   <nav id="nav" aria-label="Sections"></nav>
   <div class="maj" id="maj"></div><button class="rafraichir" id="rafraichir" aria-label="Actualiser" title="Recharger les dernières stats">↻</button>
 </div></header>
@@ -253,7 +366,7 @@
 </div>
 <div id="verrou">
   <div class="vr">
-    <svg viewBox="0 0 32 32" aria-hidden="true"><rect x="1" y="1" width="30" height="30" rx="9" fill="#2a2337"/><rect x="7" y="16" width="5" height="9" rx="2" fill="#9fadff"/><rect x="13.5" y="11" width="5" height="14" rx="2" fill="#c9a7ff"/><rect x="20" y="6" width="5" height="19" rx="2" fill="#ff7c9c"/></svg>
+    <svg viewBox="0 0 32 32" aria-hidden="true"><rect x="1" y="1" width="30" height="30" rx="9" fill="#1c1c1e"/><rect x="7" y="16" width="5" height="9" rx="2" fill="#4da3ff"/><rect x="13.5" y="11" width="5" height="14" rx="2" fill="#bf5af2"/><rect x="20" y="6" width="5" height="19" rx="2" fill="#ff375f"/></svg>
     <h1>Mes stats</h1>
     <p id="vr-msg">Entre ton code</p>
     <div class="points" id="points" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
