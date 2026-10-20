@@ -222,6 +222,12 @@ $histTt = New-Object System.Collections.ArrayList
 try { . (Join-Path $PSScriptRoot 'tiktok.ps1') }
 catch { $tiktok = [ordered]@{ ok = $false; erreur = 'tt_api'; detail = $_.Exception.Message } }
 
+# ---------- Discord ----------
+$discord = $null
+$histDc = New-Object System.Collections.ArrayList
+try { . (Join-Path $PSScriptRoot 'discord.ps1') }
+catch { $discord = [ordered]@{ ok = $false; erreur = 'dc_api'; detail = $_.Exception.Message } }
+
 # ---------- Ecriture des donnees pour le tableau de bord ----------
 $sortie = [ordered]@{
     genereLe          = Get-Iso
@@ -231,6 +237,8 @@ $sortie = [ordered]@{
     historique        = @($hist.ToArray())
     tiktok            = $tiktok
     historiqueTiktok  = @($histTt.ToArray())
+    discord           = $discord
+    historiqueDiscord = @($histDc.ToArray())
 }
 $json = ConvertTo-Json -InputObject $sortie -Depth 10
 Write-Utf8 $fichierJs ("window.STATS = " + $json + ";")
