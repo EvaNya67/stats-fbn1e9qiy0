@@ -1,0 +1,4 @@
+# Ton serveur Discord
+# Colle un lien d'invitation PERMANENT de ton serveur apres le = (exemple : https://discord.gg/abcd123)
+# Discord > clic droit sur ton serveur > Inviter des gens > Modifier le lien > Expire apres : Jamais
+DISCORD_INVITE=https://discord.gg/CZwWnWsQsz

@@ -29,6 +29,7 @@
     --lavande: #a99fbb;   /* texte secondaire */
     --pervenche: #9fadff; /* X */
     --corail: #ff7c9c;    /* TikTok */
+    --lilas: #c49bff;     /* Discord */
     --menthe: #74e3b5;    /* bon */
     --miel: #ffd27a;      /* à surveiller */
     --cerise: #ff7a8a;    /* alerte */
@@ -421,7 +422,11 @@ function demarrer() {
     tt_config: ["TikTok n'est pas encore configuré", 'Colle ta Client key et ton Client secret dans config-tiktok.txt, puis relance « Ouvrir mes stats ».'],
     tt_autorisation: ['TikTok demande ton autorisation', "Lance « Ouvrir mes stats » : une page TikTok s'ouvre, clique sur Autoriser (environ une fois par an)."],
     tt_jeton: ['TikTok refuse la connexion', 'Vérifie la Client key et le Client secret dans config-tiktok.txt, puis relance.'],
-    tt_api: ['TikTok a renvoyé une erreur', 'Réessaie dans quelques minutes.']
+    tt_api: ['TikTok a renvoyé une erreur', 'Réessaie dans quelques minutes.'],
+    dc_config: ["Ton serveur Discord n'est pas encore relié", "Colle un lien d'invitation permanent de ton serveur dans config-discord.txt, puis relance « Ouvrir mes stats »."],
+    dc_invite: ['Lien Discord invalide ou expiré', "Crée un lien d'invitation qui n'expire jamais et recolle-le dans config-discord.txt."],
+    dc_api: ['Discord a renvoyé une erreur', 'Réessaie dans quelques minutes.'],
+    reseau_dc: ['Impossible de joindre Discord', 'Vérifie ta connexion internet, puis relance.']
   };
   const alerteHtml = (code, detail, prefixe, doux) => {
     const m = MESSAGES[code] || MESSAGES.autre;
@@ -441,11 +446,14 @@ function demarrer() {
     .map((c, i) => ({ ...c, id: 'x' + i, type: 'x', P: c.X.profil || null, posts: (c.X.posts || []).slice() }));
   const T = S.tiktok || {};
   const tiktok = { id: 'tt', type: 'tt', X: T, P: T.profil || null, posts: (T.videos || []).slice(), hist: histOf(S.historiqueTiktok, 'tt_abonnes') };
-  const tous = comptesX.concat(T.ok || T.erreur ? [tiktok] : []);
-  const nomDe = c => c.P ? c.P.nom : (c.type === 'tt' ? 'TikTok' : '@' + c.pseudo);
-  const pseudoDe = c => c.P && c.P.pseudo ? '@' + c.P.pseudo : (c.type === 'x' && c.pseudo ? '@' + c.pseudo : '');
-  const reseau = c => c.type === 'tt' ? 'TikTok' : 'X';
-  const cleAbo = c => c.type === 'tt' ? 'tt_abonnes' : 'x_abonnes';
+  const D = S.discord || {};
+  const discord = { id: 'dc', type: 'dc', X: D, P: D.profil || null, posts: [], hist: histOf(S.historiqueDiscord, 'dc_membres') };
+  const tous = comptesX.concat(T.ok || T.erreur ? [tiktok] : []).concat(D.ok || D.erreur ? [discord] : []);
+  const nomDe = c => c.P ? c.P.nom : (c.type === 'tt' ? 'TikTok' : c.type === 'dc' ? 'Ton serveur' : '@' + c.pseudo);
+  const pseudoDe = c => c.type === 'dc' ? '' : c.P && c.P.pseudo ? '@' + c.P.pseudo : (c.type === 'x' && c.pseudo ? '@' + c.pseudo : '');
+  const reseau = c => c.type === 'tt' ? 'TikTok' : c.type === 'dc' ? 'Discord' : 'X';
+  const cleAbo = c => c.type === 'tt' ? 'tt_abonnes' : c.type === 'dc' ? 'dc_membres' : 'x_abonnes';
+  const couleurDe = c => c.type === 'tt' ? 'var(--corail)' : c.type === 'dc' ? 'var(--lilas)' : 'var(--pervenche)';
 
   // ================= Évolution =================
   const quand = iso => {
@@ -684,7 +692,7 @@ function demarrer() {
 
   const avatar = (c, grand) => c.P && c.P.photo
     ? `<img class="avatar ${c.type} ${grand ? 'grand' : ''}" src="${esc(c.P.photo)}" alt="">`
-    : `<div class="avatar ${c.type} ${grand ? 'grand' : ''}" aria-hidden="true">${c.type === 'tt' ? '♪' : '𝕏'}</div>`;
+    : `<div class="avatar ${c.type} ${grand ? 'grand' : ''}" aria-hidden="true">${c.type === 'tt' ? '♪' : c.type === 'dc' ? esc((c.P && c.P.nom || 'D').charAt(0)) : '𝕏'}</div>`;
 
   // ================= Vue : accueil =================
   function vueAccueil() {
@@ -700,8 +708,8 @@ function demarrer() {
 
     const pb = [];
     for (const c of tous) {
-      const pre = (c.type === 'tt' ? 'TikTok' : pseudoDe(c)) + ' : ';
-      if (c.X.erreur) pb.push(alerteHtml(c.X.erreur, c.X.detail, pre, c.X.erreur === 'tt_config'));
+      const pre = (c.type === 'x' ? pseudoDe(c) : reseau(c)) + ' : ';
+      if (c.X.erreur) pb.push(alerteHtml(c.X.erreur, c.X.detail, pre, ['tt_config', 'dc_config'].includes(c.X.erreur)));
       else if (c.X.erreurActualisation) pb.push(alerteHtml(c.X.erreurActualisation, c.X.detail, pre + 'pas actualisé. ', true));
     }
     if (pb.length) h += `<section>${pb.join('')}</section>`;
@@ -710,7 +718,7 @@ function demarrer() {
     for (const c of tous) {
       const d = c.P ? delta(c.hist, cleAbo(c)) : null;
       h += `<button class="compte" data-aller="${c.id}">${avatar(c)}
-        <span class="qui"><b>${esc(nomDe(c))}</b><span>${esc(pseudoDe(c))}${pseudoDe(c) ? ' sur ' : ''}${reseau(c)}</span></span>
+        <span class="qui"><b>${esc(nomDe(c))}</b><span>${c.type === 'dc' ? 'Serveur Discord' : esc(pseudoDe(c)) + (pseudoDe(c) ? ' sur ' : '') + reseau(c)}</span></span>
         <span class="chiffre">${c.P ? `<b class="num">${short(c.P.abonnes)}</b>${deltaTxt(d)}` : '<span class="neutre">non connecté</span>'}</span>
         ${etatHtml(etatCompte(c))}</button>`;
     }
@@ -738,14 +746,16 @@ function demarrer() {
   // ================= Vue : un compte =================
   let triActuel = lire('tri') || 'recent';
   function vueCompte(c) {
-    const couleur = c.type === 'tt' ? 'var(--corail)' : 'var(--pervenche)';
+    const couleur = couleurDe(c);
     let h = '';
-    if (c.X.erreur) h += alerteHtml(c.X.erreur, c.X.detail, '', c.X.erreur === 'tt_config');
+    if (c.X.erreur) h += alerteHtml(c.X.erreur, c.X.detail, '', ['tt_config', 'dc_config'].includes(c.X.erreur));
     else if (c.X.erreurActualisation) h += alerteHtml(c.X.erreurActualisation, c.X.detail, 'Pas actualisé : ', true);
     if (!c.P) { vue.innerHTML = h || '<p class="vide-msg">Pas encore de données pour ce compte.</p>'; return; }
-    const lienProfil = c.type === 'tt' ? (c.P.lien || `https://www.tiktok.com/@${c.P.pseudo}`) : `https://x.com/${c.P.pseudo}`;
-    h += `<section class="tete">${avatar(c, true)}<div><h1>${esc(c.P.nom)}</h1><div class="pseudo"><a href="${esc(lienProfil)}" target="_blank" rel="noopener">${esc(pseudoDe(c))}</a> sur ${reseau(c)}${c.X.epoch ? `, mis à jour ${esc(ago(c.X.epoch))}` : ''}</div></div></section>`;
-    const st = c.type === 'tt'
+    const lienProfil = c.type === 'dc' ? c.P.lien : c.type === 'tt' ? (c.P.lien || `https://www.tiktok.com/@${c.P.pseudo}`) : `https://x.com/${c.P.pseudo}`;
+    h += `<section class="tete">${avatar(c, true)}<div><h1>${esc(c.P.nom)}</h1><div class="pseudo"><a href="${esc(lienProfil)}" target="_blank" rel="noopener">${esc(c.type === 'dc' ? 'Lien d\'invitation' : pseudoDe(c))}</a> ${c.type === 'dc' ? '· serveur Discord' : 'sur ' + reseau(c)}${c.X.epoch ? `, mis à jour ${esc(ago(c.X.epoch))}` : ''}</div></div></section>`;
+    const st = c.type === 'dc'
+      ? [['Membres', c.P.abonnes, 'dc_membres'], ['En ligne', c.P.enLigne, 'dc_enligne'], ['Boosts', c.P.boosts, 'dc_boosts']]
+      : c.type === 'tt'
       ? [['Abonnés', c.P.abonnes, 'tt_abonnes'], ['Likes reçus', c.P.likes, 'tt_likes'], ['Vidéos', c.P.videos, 'tt_videos']]
       : [['Abonnés', c.P.abonnes, 'x_abonnes'], ['Posts', c.P.posts, 'x_posts'], ['Abonnements', c.P.abonnements, 'x_abonnements']];
     h += `<div class="stats">${st.map(([l, v, k]) => `<div class="stat"><div class="v num">${short(v)}</div><div class="l">${l}</div><div class="d">${deltaTxt(delta(c.hist, k))}</div></div>`).join('')}</div>`;
@@ -758,6 +768,19 @@ function demarrer() {
       h += `<ul class="raisons">${s.raisons.map(t => `<li>${t}</li>`).join('') || '<li>Il faut quelques posts de plus de 24 h pour estimer ta portée.</li>'}</ul>
         <button class="lien-bouton" data-aller="checkup" data-compte="${esc(c.P.pseudo)}">Faire un check-up shadowban</button>
         <p class="petit">X ne dit jamais officiellement si un compte est shadowban. Ceci est une estimation ; le check-up donne un verdict bien plus sûr.</p></div>`;
+    } else if (c.type === 'dc') {
+      const pctLigne = c.P.abonnes ? c.P.enLigne / c.P.abonnes * 100 : 0;
+      const niveau = c.P.boosts >= 14 ? 3 : c.P.boosts >= 7 ? 2 : c.P.boosts >= 2 ? 1 : 0;
+      const prochain = [2, 7, 14].find(n => c.P.boosts < n);
+      const enl = c.hist.filter(x => x.dc_enligne != null).map(x => x.dc_enligne);
+      const d7 = (() => { const last = c.hist[c.hist.length - 1]; if (!last) return null; const ref = c.hist.find(x => x.epoch >= last.epoch - 7 * 86400); return ref && ref !== last ? last.dc_membres - ref.dc_membres : null; })();
+      h += `<div class="bloc"><h3>En bref</h3><ul class="raisons">
+        <li>🟢 <b>${fmt(c.P.enLigne)} membres connectés</b> en ce moment, soit <b>${dec(pctLigne)} %</b> du serveur. ${pctLigne >= 25 ? 'Très actif !' : pctLigne >= 10 ? 'Bonne activité.' : 'Assez calme : un event ou un salon qui bouge peut réveiller tout le monde.'}</li>
+        ${enl.length >= 4 ? `<li>📊 En moyenne <b>${fmt(Math.round(enl.reduce((s, v) => s + v, 0) / enl.length))} en ligne</b> à chaque mesure (record : ${fmt(Math.max(...enl))}).</li>` : ''}
+        ${d7 != null ? `<li>${d7 > 0 ? '📈' : d7 < 0 ? '📉' : '➖'} ${d7 > 0 ? '+' : d7 < 0 ? '−' : ''}${fmt(Math.abs(d7))} membre${Math.abs(d7) > 1 ? 's' : ''} sur les 7 derniers jours.</li>` : ''}
+        <li>💎 ${c.P.boosts} boost${c.P.boosts > 1 ? 's' : ''} : ${niveau ? `<b>niveau ${niveau}</b>` : 'pas encore de niveau'}${prochain ? `, encore ${prochain - c.P.boosts} pour le niveau ${niveau + 1}` : ', niveau max'}.</li>
+        ${c.P.expire ? `<li>⚠️ Ton lien d'invitation <b>expire</b> le ${esc(dateFr(c.P.expire))} : remplace-le par un lien permanent dans config-discord.txt.</li>` : ''}
+      </ul><p class="petit">Discord ne donne que le nombre de membres et de connectés, pas les messages. C'est gratuit.</p></div>`;
     } else {
       const tot = k => c.posts.reduce((s, p) => s + (p[k] || 0), 0);
       const vues = tot('vues'), likes = tot('likes');
@@ -767,7 +790,7 @@ function demarrer() {
         ${likes ? `<li>📤 ${dec(tot('partages') / likes * 100, 0)} partages pour 100 likes : ${tot('partages') / likes >= 0.2 ? 'tes vidéos sont beaucoup envoyées aux potes, excellent signe.' : 'dans la moyenne.'}</li>` : ''}
       </ul></div>`;
     }
-    h += `<div class="bloc"><h3>Abonnés dans le temps</h3>${c.hist.length >= 2 ? courbe(c.hist.map(x => ({ t: x.epoch, v: x[cleAbo(c)], d: x.date })), couleur, 'g' + c.id) : '<p class="vide-msg">La courbe apparaît après deux mises à jour.<br>Elle se remplit toute seule toutes les 30 minutes.</p>'}</div></section>`;
+    h += `<div class="bloc"><h3>${c.type === 'dc' ? 'Membres' : 'Abonnés'} dans le temps</h3>${c.hist.length >= 2 ? courbe(c.hist.map(x => ({ t: x.epoch, v: x[cleAbo(c)], d: x.date })), couleur, 'g' + c.id) : '<p class="vide-msg">La courbe apparaît après deux mises à jour.<br>Elle se remplit toute seule toutes les 30 minutes.</p>'}</div></section>`;
 
     const a = analyse(c.posts, c.type);
     if (a.length) h += `<section><h2>Ce qui marche pour toi</h2><p class="sous">D'après tes ${c.posts.length} derniers ${c.type === 'tt' ? 'vidéos' : 'posts'}. Ce sont des tendances, pas des règles.</p><ul class="conseils">${a.map(x => `<li><span aria-hidden="true">${x.e}</span><span>${x.t}</span></li>`).join('')}</ul></section>`;
@@ -859,7 +882,7 @@ function demarrer() {
 
   // ================= Navigation =================
   const onglets = [{ id: 'accueil', label: 'Accueil' }]
-    .concat(tous.map(c => ({ id: c.id, label: c.type === 'tt' ? 'TikTok' : (pseudoDe(c) || 'X'), couleur: c.type === 'tt' ? 'var(--corail)' : 'var(--pervenche)' })))
+    .concat(tous.map(c => ({ id: c.id, label: c.type === 'x' ? (pseudoDe(c) || 'X') : reseau(c), couleur: couleurDe(c) })))
     .concat(comptesX.some(c => c.P) ? [{ id: 'checkup', label: 'Check-up' }] : []);
   let actuel = (location.hash || '').slice(1) || lire('onglet') || 'accueil';
   if (!onglets.some(o => o.id === actuel)) actuel = 'accueil';
